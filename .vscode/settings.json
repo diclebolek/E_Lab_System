@@ -1,0 +1,11 @@
+{
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "dart.enableSdkFormatter": true,
+  "dart.lineLength": 120,
+  "cmake.sourceDirectory": "C:/Users/test/Downloads/boslar/E_Lab_System-master/E_Lab_System-master/g211210055_labsystem/linux"
+}
