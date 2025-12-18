@@ -102,6 +102,11 @@ class FirebaseService {
     return await PostgresService.updatePassword(newPassword);
   }
 
+  // Şifre değiştirme (mevcut şifre doğrulamalı)
+  static Future<bool> changePassword(String currentPassword, String newPassword) async {
+    return await PostgresService.changePassword(currentPassword, newPassword);
+  }
+
   // Hesap silme
   static Future<bool> deleteAccount() async {
     return await PostgresService.deleteAccount();

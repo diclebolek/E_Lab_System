@@ -58,7 +58,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // Tüm kılavuzları yükle
       final guidesList = <Map<String, dynamic>>[];
       await for (var guide in FirebaseService.getGuides()) {
-        guidesList.add(guide as Map<String, dynamic>);
+        if (guide is Map<String, dynamic>) {
+          guidesList.add(guide);
+        }
       }
 
       final guides = <Map<String, dynamic>>[];
@@ -444,7 +446,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       // Doğum tarihini doldur (setState dışında controller'ı güncelle)
       String? formattedDate;
-      if (parsedData['birthDate'] != null) {
+      if (parsedData['birthDate'] != null && parsedData['birthDate'] is DateTime) {
         final birthDate = parsedData['birthDate'] as DateTime;
         formattedDate =
             '${birthDate.day.toString().padLeft(2, '0')}/${birthDate.month.toString().padLeft(2, '0')}/${birthDate.year}';
@@ -453,13 +455,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // setState içinde tüm değişiklikleri yap
       setState(() {
         // Hasta bilgilerini doldur
-        if (parsedData['fullName'] != null) {
+        if (parsedData['fullName'] != null && parsedData['fullName'] is String) {
           _fullNameController.text = parsedData['fullName'] as String;
         }
-        if (parsedData['tcNumber'] != null) {
+        if (parsedData['tcNumber'] != null && parsedData['tcNumber'] is String) {
           _tcController.text = parsedData['tcNumber'] as String;
         }
-        if (parsedData['gender'] != null) {
+        if (parsedData['gender'] != null && parsedData['gender'] is String) {
           _gender = parsedData['gender'] as String;
         }
 
@@ -472,18 +474,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           if (formattedDate.length == 10) {
             _age = _calculateAgeInYears(formattedDate);
           }
-        } else if (parsedData['age'] != null) {
+        } else if (parsedData['age'] != null && parsedData['age'] is int) {
           _age = parsedData['age'] as int;
         }
 
         // Serum değerlerini doldur
-        if (parsedData['serumTypes'] != null) {
-          final serumList = parsedData['serumTypes'] as List<Map<String, String>>;
+        if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
+          final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
           int filledCount = 0;
           for (var serum in serumList) {
-            final type = serum['type'] ?? '';
-            final value = serum['value'] ?? '';
-            if (_serumControllers.containsKey(type) && value.isNotEmpty) {
+            final type = (serum['type'] as String?) ?? '';
+            final value = (serum['value'] as String?) ?? '';
+            if (type.isNotEmpty && _serumControllers.containsKey(type) && value.isNotEmpty) {
               _serumControllers[type]!.text = value;
               filledCount++;
             }
@@ -497,7 +499,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       if (mounted) {
         final filledCount = parsedData.containsKey('birthDate') || parsedData.containsKey('age') ? 1 : 0;
-        final serumCount = parsedData['serumTypes'] != null ? (parsedData['serumTypes'] as List).length : 0;
+        final serumCount = parsedData['serumTypes'] != null && parsedData['serumTypes'] is List ? (parsedData['serumTypes'] as List).length : 0;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -555,7 +557,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       // Doğum tarihini doldur (setState dışında controller'ı güncelle)
       String? formattedDate;
-      if (parsedData['birthDate'] != null) {
+      if (parsedData['birthDate'] != null && parsedData['birthDate'] is DateTime) {
         final birthDate = parsedData['birthDate'] as DateTime;
         formattedDate =
             '${birthDate.day.toString().padLeft(2, '0')}/${birthDate.month.toString().padLeft(2, '0')}/${birthDate.year}';
@@ -564,13 +566,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // setState içinde tüm değişiklikleri yap
       setState(() {
         // Hasta bilgilerini doldur
-        if (parsedData['fullName'] != null) {
+        if (parsedData['fullName'] != null && parsedData['fullName'] is String) {
           _fullNameController.text = parsedData['fullName'] as String;
         }
-        if (parsedData['tcNumber'] != null) {
+        if (parsedData['tcNumber'] != null && parsedData['tcNumber'] is String) {
           _tcController.text = parsedData['tcNumber'] as String;
         }
-        if (parsedData['gender'] != null) {
+        if (parsedData['gender'] != null && parsedData['gender'] is String) {
           _gender = parsedData['gender'] as String;
         }
 
@@ -583,18 +585,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           if (formattedDate.length == 10) {
             _age = _calculateAgeInYears(formattedDate);
           }
-        } else if (parsedData['age'] != null) {
+        } else if (parsedData['age'] != null && parsedData['age'] is int) {
           _age = parsedData['age'] as int;
         }
 
         // Serum değerlerini doldur
-        if (parsedData['serumTypes'] != null) {
-          final serumList = parsedData['serumTypes'] as List<Map<String, String>>;
+        if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
+          final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
           int filledCount = 0;
           for (var serum in serumList) {
-            final type = serum['type'] ?? '';
-            final value = serum['value'] ?? '';
-            if (_serumControllers.containsKey(type) && value.isNotEmpty) {
+            final type = (serum['type'] as String?) ?? '';
+            final value = (serum['value'] as String?) ?? '';
+            if (type.isNotEmpty && _serumControllers.containsKey(type) && value.isNotEmpty) {
               _serumControllers[type]!.text = value;
               filledCount++;
             }
@@ -608,7 +610,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       if (mounted) {
         final filledCount = parsedData.containsKey('birthDate') || parsedData.containsKey('age') ? 1 : 0;
-        final serumCount = parsedData['serumTypes'] != null ? (parsedData['serumTypes'] as List).length : 0;
+        final serumCount = parsedData['serumTypes'] != null && parsedData['serumTypes'] is List ? (parsedData['serumTypes'] as List).length : 0;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -751,14 +753,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (_age == 0 || _guides.isEmpty) return null;
 
     for (var guide in _guides) {
-      final guideData = guide['data'] as List;
+      final guideData = guide['data'];
+      if (guideData is! List) continue;
       final filteredRows = guideData.where((row) {
-        final ageRange = row['ageRange'] as String? ?? '';
+        if (row is! Map) return false;
+        final ageRange = (row['ageRange'] as String?) ?? '';
         return _isAgeInRange(ageRange, _age);
       }).toList();
 
       for (var row in filteredRows) {
-        if (row['serumType'] == serumType) {
+        if (row is! Map) continue;
+        if ((row['serumType'] as String?) == serumType) {
           // Öncelik sırası: min/max > geoMean > arithMean > mean > interval
           final minValue = _safeToDouble(row['min']);
           final maxValue = _safeToDouble(row['max']);
@@ -810,16 +815,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final results = <Map<String, dynamic>>[];
 
     for (var guide in _guides) {
-      final guideData = guide['data'] as List;
+      final guideData = guide['data'];
+      if (guideData is! List) continue;
       final filteredRows = guideData.where((row) {
-        final ageRange = row['ageRange'] as String? ?? '';
+        if (row is! Map) return false;
+        final ageRange = (row['ageRange'] as String?) ?? '';
         return _isAgeInRange(ageRange, _age);
       }).toList();
 
       final evaluations = <Map<String, dynamic>>[];
 
       for (var row in filteredRows) {
-        final serumType = row['serumType'] as String;
+        if (row is! Map) continue;
+        final serumType = (row['serumType'] as String?) ?? '';
         if (serumValues.containsKey(serumType)) {
           final value = serumValues[serumType]!;
           final evaluation = <String, dynamic>{'serumType': serumType};
@@ -1439,8 +1447,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               const SizedBox(height: 16),
                               const Divider(),
                               const SizedBox(height: 16),
-                              ...(result['evaluations'] as List).map((eval) {
-                                final serumType = eval['serumType'] as String;
+                              ...((result['evaluations'] as List?) ?? []).whereType<Map>().map((eval) {
+                                final serumType = (eval['serumType'] as String?) ?? '';
                                 final currentValue = serumValues[serumType] ?? 0.0;
                                 final arrow =
                                     eval['normalArrow'] ??

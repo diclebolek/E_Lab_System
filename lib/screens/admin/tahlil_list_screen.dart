@@ -177,6 +177,58 @@ class _TahlilListScreenState extends State<TahlilListScreen> {
     return null;
   }
 
+  Future<void> _deleteTahlil(TahlilModel tahlil) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tahlili Sil'),
+        content: Text(
+          'Bu tahlili silmek istediğinizden emin misiniz?\n\n'
+          '${tahlil.fullName}\nTC: ${tahlil.tcNumber}\nTarih: ${tahlil.reportDate}\n\n'
+          'Bu işlem geri alınamaz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      final success = await FirebaseService.deleteTahlil(tahlil.id);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tahlil başarıyla silindi.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {
+          _allTahliller.removeWhere((item) => item.id == tahlil.id);
+          _filteredTahliller.removeWhere((item) => item.id == tahlil.id);
+        });
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tahlil silinirken bir hata oluştu.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
@@ -403,7 +455,20 @@ class _TahlilListScreenState extends State<TahlilListScreen> {
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: Text('Tarih: ${tahlil.reportDate}'),
-                              trailing: const Icon(Icons.chevron_right),
+                                              trailing: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.delete,
+                                                      color: Colors.red,
+                                                    ),
+                                                    tooltip: 'Tahlili Sil',
+                                                    onPressed: () => _deleteTahlil(tahlil),
+                                                  ),
+                                                  const Icon(Icons.chevron_right),
+                                                ],
+                                              ),
                               onTap: () {
                                 Navigator.push(
                                   context,

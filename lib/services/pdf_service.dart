@@ -1,8 +1,21 @@
 import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart'
+    as mlkit
+    show
+        TextRecognizer,
+        RecognizedText,
+        TextBlock,
+        TextLine,
+        InputImage,
+        InputImageMetadata,
+        InputImageRotation,
+        InputImageFormat;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Size;
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart' show FilePicker, FilePickerResult, FileType;
+import 'package:syncfusion_flutter_pdf/pdf.dart' show PdfDocument, PdfTextExtractor;
 
 class PdfService {
   // OCR'dan çıkarılan metinden bilgileri parse etme
@@ -338,7 +351,6 @@ class PdfService {
       final XFile? image = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
       return image;
     } catch (e) {
-      print('❌ Kamera hatası: $e');
       rethrow; // Hatayı yukarı fırlat ki detaylı mesaj gösterilebilsin
     }
   }
@@ -357,65 +369,50 @@ class PdfService {
   // OCR ile görüntüden metin çıkarma (Android/iOS ve Web uyumlu)
   static Future<String> extractTextFromImage(XFile imageFile) async {
     try {
-      print('📸 OCR başlatılıyor... Platform: ${kIsWeb ? "Web" : "Android/iOS"}');
-      print('📁 Görüntü yolu: ${imageFile.path}');
-      
       // Web platformunda Google ML Kit kullan
       if (kIsWeb) {
-        print('🔍 Web platformunda Google ML Kit kullanılıyor...');
         final Uint8List imageBytes = await imageFile.readAsBytes();
-        final inputImage = InputImage.fromBytes(
+        final inputImage = mlkit.InputImage.fromBytes(
           bytes: imageBytes,
-          metadata: InputImageMetadata(
+          metadata: mlkit.InputImageMetadata(
             size: const Size(0, 0), // Web'de size gerekli değil
-            rotation: InputImageRotation.rotation0deg,
-            format: InputImageFormat.nv21,
+            rotation: mlkit.InputImageRotation.rotation0deg,
+            format: mlkit.InputImageFormat.nv21,
             bytesPerRow: 0,
           ),
         );
 
-        final TextRecognizer textRecognizer = TextRecognizer();
-        final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+        final mlkit.TextRecognizer textRecognizer = mlkit.TextRecognizer();
+        final mlkit.RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
 
         String extractedText = '';
-        for (TextBlock block in recognizedText.blocks) {
-          for (TextLine line in block.lines) {
+        for (mlkit.TextBlock block in recognizedText.blocks) {
+          for (mlkit.TextLine line in block.lines) {
             extractedText += '${line.text}\n';
           }
         }
 
         await textRecognizer.close();
-        print('✅ OCR tamamlandı. Metin uzunluğu: ${extractedText.length}');
         return extractedText;
       }
 
       // Android/iOS platformlarında Google ML Kit kullan
-      print('🔍 Android/iOS platformunda Google ML Kit kullanılıyor...');
-      final inputImage = InputImage.fromFilePath(imageFile.path);
-      print('📷 InputImage oluşturuldu: ${imageFile.path}');
-      
-      final TextRecognizer textRecognizer = TextRecognizer();
-      print('🔤 TextRecognizer başlatıldı');
-      
-      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-      print('📝 OCR işlemi tamamlandı. Blok sayısı: ${recognizedText.blocks.length}');
+      final inputImage = mlkit.InputImage.fromFilePath(imageFile.path);
+
+      final mlkit.TextRecognizer textRecognizer = mlkit.TextRecognizer();
+
+      final mlkit.RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
 
       String extractedText = '';
-      for (TextBlock block in recognizedText.blocks) {
-        for (TextLine line in block.lines) {
+      for (mlkit.TextBlock block in recognizedText.blocks) {
+        for (mlkit.TextLine line in block.lines) {
           extractedText += '${line.text}\n';
         }
       }
 
       await textRecognizer.close();
-      print('✅ OCR tamamlandı. Metin uzunluğu: ${extractedText.length}');
-      if (extractedText.isNotEmpty) {
-        print('📄 Çıkarılan metin (ilk 200 karakter): ${extractedText.substring(0, extractedText.length > 200 ? 200 : extractedText.length)}...');
-      }
       return extractedText;
-    } catch (e, stackTrace) {
-      print('❌ OCR hatası: $e');
-      print('📚 Stack trace: $stackTrace');
+    } catch (e) {
       return '';
     }
   }
@@ -423,33 +420,23 @@ class PdfService {
   // Kameradan fotoğraf çekip OCR ile metin çıkarma ve parse etme
   static Future<Map<String, dynamic>?> scanTahlilFromCamera() async {
     try {
-      print('📷 Kameradan fotoğraf çekiliyor...');
       // Kameradan fotoğraf çek
       final XFile? image = await pickImageFromCamera();
       if (image == null) {
-        print('❌ Kamera: Fotoğraf alınamadı');
         throw Exception('Kamera açılamadı veya fotoğraf çekilmedi. Lütfen kamera iznini kontrol edin.');
       }
-      print('✅ Fotoğraf çekildi: ${image.path}');
 
       // OCR ile metin çıkar
-      print('🔍 OCR işlemi başlatılıyor...');
       final extractedText = await extractTextFromImage(image);
       if (extractedText.isEmpty) {
-        print('❌ OCR: Metin çıkarılamadı');
         throw Exception('Fotoğraftan metin çıkarılamadı. Lütfen fotoğrafın net ve okunabilir olduğundan emin olun.');
       }
-      print('✅ OCR başarılı. Çıkarılan metin uzunluğu: ${extractedText.length}');
 
       // Metni parse et
-      print('🔍 Metin parse ediliyor...');
       final parsedData = parseTahlilData(extractedText);
-      print('✅ Parse tamamlandı. Bulunan alanlar: ${parsedData.keys.toList()}');
 
       return parsedData;
-    } catch (e, stackTrace) {
-      print('❌ scanTahlilFromCamera hatası: $e');
-      print('📚 Stack trace: $stackTrace');
+    } catch (e) {
       rethrow; // Hatayı yukarı fırlat ki detaylı mesaj gösterilebilsin
     }
   }
@@ -476,5 +463,77 @@ class PdfService {
     } catch (e) {
       return null;
     }
+  }
+
+  // PDF dosyası seçme (web ve platform uyumlu)
+  static Future<FilePickerResult?> pickPdfFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+      return result;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // PDF'den metin çıkarma (web ve platform uyumlu)
+  static Future<String> extractTextFromPdf(dynamic pdfSource) async {
+    try {
+      Uint8List pdfBytes;
+
+      // Web platformunda bytes kullan, diğer platformlarda path veya bytes
+      if (kIsWeb) {
+        if (pdfSource is Uint8List) {
+          pdfBytes = pdfSource;
+        } else {
+          return '';
+        }
+      } else {
+        if (pdfSource is String) {
+          // Path kullan
+          pdfBytes = await File(pdfSource).readAsBytes();
+        } else if (pdfSource is Uint8List) {
+          pdfBytes = pdfSource;
+        } else {
+          return '';
+        }
+      }
+
+      final pdfDoc = PdfDocument(inputBytes: pdfBytes);
+      String extractedText = '';
+
+      // PDF sayfalarını oku
+      for (int i = 0; i < pdfDoc.pages.count; i++) {
+        final text = PdfTextExtractor(pdfDoc).extractText(startPageIndex: i, endPageIndex: i);
+        extractedText = '$extractedText$text\n';
+      }
+
+      pdfDoc.dispose();
+
+      return extractedText;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  // PDF dosyasından bytes al (web uyumlu)
+  static Future<Uint8List?> getPdfBytes(FilePickerResult? result) async {
+    if (result == null) return null;
+
+    try {
+      if (kIsWeb) {
+        // Web'de bytes kullan
+        return result.files.single.bytes;
+      } else {
+        // Platform'da path veya bytes kullan
+        if (result.files.single.path != null) {
+          return await File(result.files.single.path!).readAsBytes();
+        } else if (result.files.single.bytes != null) {
+          return result.files.single.bytes;
+        }
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
   }
 }

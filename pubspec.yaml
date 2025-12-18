@@ -49,6 +49,10 @@ dependencies:
   tesseract_ocr: ^0.4.0
   image_picker: ^1.0.7
   
+  # PDF & File Picker
+  file_picker: ^10.3.7
+  syncfusion_flutter_pdf: ^31.2.15
+  
   # Database
   postgres: ^3.0.0
   crypto: ^3.0.5

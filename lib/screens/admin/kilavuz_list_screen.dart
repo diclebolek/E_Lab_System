@@ -32,6 +32,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
     setState(() => _isLoading = true);
     try {
       final guidesList = <Map<String, dynamic>>[];
+      // FirebaseService.getGuides() bir Stream döndürdüğü varsayılıyor
       await for (var guide in FirebaseService.getGuides()) {
         guidesList.add(guide as Map<String, dynamic>);
       }
@@ -40,6 +41,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      // Hata yönetimi eklenebilir.
       setState(() {
         _guides = [];
         _isLoading = false;
@@ -60,14 +62,13 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    const Color primaryColor = Color(0xFF0058A3);
+    const Color accentColor = Color(0xFF00A8E8);
 
     return Scaffold(
       appBar: AppBar(
         title: isMobile
-            ? const Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Kılavuz Listesi'),
-              )
+            ? const Align(alignment: Alignment.centerLeft, child: Text('Kılavuz Listesi'))
             : const Text('Kılavuz Listesi'),
         automaticallyImplyLeading: false, // Geri butonunu gizle
         centerTitle: !isMobile,
@@ -76,17 +77,12 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0058A3), Color(0xFF00A8E8)],
+              colors: [primaryColor, accentColor],
             ),
           ),
         ),
         actions: [
-          if (!isMobile)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadGuides,
-              tooltip: 'Yenile',
-            ),
+          if (!isMobile) IconButton(icon: const Icon(Icons.refresh), onPressed: _loadGuides, tooltip: 'Yenile'),
           if (isMobile)
             Builder(
               builder: (context) => IconButton(
@@ -109,26 +105,13 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.book_outlined,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
+                        Icon(Icons.book_outlined, size: 80, color: Colors.grey[400]),
                         const SizedBox(height: 20),
-                        Text(
-                          'Henüz kılavuz bulunmamaktadır',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
+                        Text('Henüz kılavuz bulunmamaktadır', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
                         const SizedBox(height: 8),
                         Text(
                           'Yeni kılavuz oluşturmak için "Kılavuz Oluştur" sayfasına gidin',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
+                          style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
@@ -136,20 +119,15 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const KilavuzScreen(),
-                              ),
+                              MaterialPageRoute(builder: (context) => const KilavuzScreen()),
                             ).then((_) => _loadGuides());
                           },
                           icon: const Icon(Icons.add),
                           label: const Text('Yeni Kılavuz Oluştur'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0058A3),
+                            backgroundColor: primaryColor,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           ),
                         ),
                       ],
@@ -162,21 +140,16 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                       itemCount: _guides.length,
                       itemBuilder: (context, index) {
                         final guide = _guides[index];
-                        final guideName =
-                            guide['name'] ?? 'Kılavuz ${index + 1}';
+                        final guideName = guide['name'] ?? 'Kılavuz ${index + 1}';
                         final createdAt = _formatDate(guide['created_at']);
                         return Card(
                           margin: const EdgeInsets.only(bottom: 16),
                           elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           child: InkWell(
                             onTap: () async {
                               // Kılavuz detayını göster
-                              final guideData = await FirebaseService.getGuide(
-                                guideName,
-                              );
+                              final guideData = await FirebaseService.getGuide(guideName);
                               if (context.mounted && guideData != null) {
                                 showDialog(
                                   context: context,
@@ -185,39 +158,27 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                     content: SingleChildScrollView(
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text('Oluşturulma: $createdAt'),
                                           const SizedBox(height: 16),
                                           Text(
                                             'Satır Sayısı: ${(guideData['rows'] as List).length}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           const SizedBox(height: 8),
                                           const Text('Kılavuz Detayları:'),
                                           const SizedBox(height: 8),
-                                          ...((guideData['rows'] as List)
-                                              .take(5)
-                                              .map((row) {
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 4,
-                                                      ),
-                                                  child: Text(
-                                                    '• ${row['serumType']} - Yaş: ${row['ageRange']}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                );
-                                              })),
-                                          if ((guideData['rows'] as List)
-                                                  .length >
-                                              5)
+                                          ...((guideData['rows'] as List).take(5).map((row) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(bottom: 4),
+                                              child: Text(
+                                                '• ${row['serumType']} - Yaş: ${row['ageRange']}',
+                                                style: const TextStyle(fontSize: 12),
+                                              ),
+                                            );
+                                          })),
+                                          if ((guideData['rows'] as List).length > 5)
                                             Text(
                                               '... ve ${(guideData['rows'] as List).length - 5} satır daha',
                                               style: TextStyle(
@@ -230,29 +191,21 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                       ),
                                     ),
                                     actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Kapat'),
-                                      ),
+                                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kapat')),
                                       ElevatedButton.icon(
                                         onPressed: () {
                                           Navigator.pop(context);
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) =>
-                                                  KilavuzScreen(
-                                                    guideDataToEdit: guideData,
-                                                  ),
+                                              builder: (context) => KilavuzScreen(guideDataToEdit: guideData),
                                             ),
                                           ).then((_) => _loadGuides());
                                         },
                                         icon: const Icon(Icons.edit, size: 18),
                                         label: const Text('Düzenle'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF0058A3,
-                                          ),
+                                          backgroundColor: primaryColor,
                                           foregroundColor: Colors.white,
                                         ),
                                       ),
@@ -271,9 +224,8 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                   end: Alignment.bottomRight,
                                   colors: [
                                     Colors.white,
-                                    const Color(
-                                      0xFF0058A3,
-                                    ).withValues(alpha: 0.02),
+                                    // HATA DÜZELTİLDİ: .withValues(alpha: 0.02) -> .withValues(alpha:0.02)
+                                    primaryColor.withValues(alpha: 0.02),
                                   ],
                                 ),
                               ),
@@ -285,45 +237,32 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                         width: 60,
                                         height: 60,
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF0058A3),
-                                              Color(0xFF00A8E8),
-                                            ],
-                                          ),
+                                          gradient: const LinearGradient(colors: [primaryColor, accentColor]),
                                           borderRadius: BorderRadius.circular(14),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: const Color(
-                                                0xFF0058A3,
-                                              ).withValues(alpha: 0.3),
+                                              // HATA DÜZELTİLDİ: .withValues(alpha: 0.3) -> .withValues(alpha:0.3)
+                                              color: primaryColor.withValues(alpha: 0.3),
                                               blurRadius: 12,
                                               offset: const Offset(0, 6),
                                             ),
                                           ],
                                         ),
-                                        child: const Icon(
-                                          Icons.book,
-                                          color: Colors.white,
-                                          size: 28,
-                                        ),
+                                        child: const Icon(Icons.book, color: Colors.white, size: 28),
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Padding(
-                                              padding: EdgeInsets.only(
-                                                right: isMobile ? 60 : 0,
-                                              ),
+                                              padding: EdgeInsets.only(right: isMobile ? 60 : 0),
                                               child: Text(
                                                 guideName,
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18,
-                                                  color: Color(0xFF0058A3),
+                                                  color: primaryColor,
                                                 ),
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
@@ -332,21 +271,14 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                             const SizedBox(height: 6),
                                             Row(
                                               children: [
-                                                Icon(
-                                                  Icons.calendar_today,
-                                                  size: 14,
-                                                  color: Colors.grey[600],
-                                                ),
+                                                Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
                                                 const SizedBox(width: 4),
                                                 Flexible(
                                                   child: Text(
                                                     createdAt.isNotEmpty
                                                         ? 'Oluşturulma: $createdAt'
                                                         : 'Tarih bilgisi yok',
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.grey[600],
-                                                    ),
+                                                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                                                     overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
@@ -365,252 +297,184 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
+                                          // Mobilde sağ üstte çöp kutusu ikonu
                                           IconButton(
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(),
                                             icon: Container(
                                               padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
+                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
                                                 color: Colors.red.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
-                                              child: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
-                                                size: 18,
-                                              ),
+                                              child: const Icon(Icons.delete, color: Colors.red, size: 18),
                                             ),
                                             onPressed: () async {
-                                      // Silme onayı
-                                      final confirmed = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Kılavuzu Sil'),
-                                          content: Text(
-                                            '"$guideName" kılavuzunu silmek istediğinizden emin misiniz?',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: const Text('İptal'),
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                                foregroundColor: Colors.white,
-                                              ),
-                                              child: const Text('Sil'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
+                                              // Silme onayı
+                                              final confirmed = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Kılavuzu Sil'),
+                                                  content: Text(
+                                                    '"$guideName" kılavuzunu silmek istediğinizden emin misiniz?',
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, false),
+                                                      child: const Text('İptal'),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () => Navigator.pop(context, true),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: Colors.red,
+                                                        foregroundColor: Colors.white,
+                                                      ),
+                                                      child: const Text('Sil'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
 
-                                      if (confirmed == true && context.mounted) {
-                                        final success = await FirebaseService
-                                            .deleteGuide(guideName);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                success
-                                                    ? 'Kılavuz başarıyla silindi!'
-                                                    : 'Kılavuz silinirken bir hata oluştu!',
-                                              ),
-                                              backgroundColor: success
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                            ),
-                                          );
-                                          if (success) {
-                                            _loadGuides();
-                                          }
-                                        }
-                                      }
-                                    },
-                                    tooltip: 'Sil',
-                                  ),
+                                              if (confirmed == true && context.mounted) {
+                                                final success = await FirebaseService.deleteGuide(guideName);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        success
+                                                            ? 'Kılavuz başarıyla silindi!'
+                                                            : 'Kılavuz silinirken bir hata oluştu!',
+                                                      ),
+                                                      backgroundColor: success ? Colors.green : Colors.red,
+                                                    ),
+                                                  );
+                                                  if (success) {
+                                                    _loadGuides();
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            tooltip: 'Sil',
+                                          ),
+                                          const SizedBox(width: 8),
+                                          // Mobilde sağ üstte üç nokta ikonu
                                           PopupMenuButton<String>(
                                             padding: EdgeInsets.zero,
                                             icon: Container(
                                               padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
-                                                color: const Color(
-                                                  0xFF0058A3,
-                                                ).withValues(alpha: 0.1),
+                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
+                                                color: primaryColor.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
-                                              child: const Icon(
-                                                Icons.more_vert,
-                                                color: Color(0xFF0058A3),
-                                                size: 18,
-                                              ),
+                                              child: const Icon(Icons.more_vert, color: primaryColor, size: 18),
                                             ),
                                             onSelected: (value) async {
-                                      if (value == 'edit') {
-                                        final guideData =
-                                            await FirebaseService.getGuide(
-                                              guideName,
-                                            );
-                                        if (context.mounted &&
-                                            guideData != null) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  KilavuzScreen(
-                                                    guideDataToEdit: guideData,
-                                                  ),
-                                            ),
-                                          ).then((_) => _loadGuides());
-                                        }
-                                      } else if (value == 'view') {
-                                        final guideData =
-                                            await FirebaseService.getGuide(
-                                              guideName,
-                                            );
-                                        if (context.mounted &&
-                                            guideData != null) {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: Text(guideName),
-                                              content: SingleChildScrollView(
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'Oluşturulma: $createdAt',
+                                              if (value == 'edit') {
+                                                final guideData = await FirebaseService.getGuide(guideName);
+                                                if (context.mounted && guideData != null) {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => KilavuzScreen(guideDataToEdit: guideData),
                                                     ),
-                                                    const SizedBox(height: 16),
-                                                    Text(
-                                                      'Satır Sayısı: ${(guideData['rows'] as List).length}',
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 8),
-                                                    const Text(
-                                                      'Kılavuz Detayları:',
-                                                    ),
-                                                    const SizedBox(height: 8),
-                                                    ...((guideData['rows']
-                                                            as List)
-                                                        .take(5)
-                                                        .map((row) {
-                                                          return Padding(
-                                                            padding:
-                                                                const EdgeInsets.only(
-                                                                  bottom: 4,
-                                                                ),
-                                                            child: Text(
-                                                              '• ${row['serumType']} - Yaş: ${row['ageRange']}',
-                                                              style:
-                                                                  const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                  ),
+                                                  ).then((_) => _loadGuides());
+                                                }
+                                              } else if (value == 'view') {
+                                                final guideData = await FirebaseService.getGuide(guideName);
+                                                if (context.mounted && guideData != null) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      title: Text(guideName),
+                                                      content: SingleChildScrollView(
+                                                        child: Column(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text('Oluşturulma: $createdAt'),
+                                                            const SizedBox(height: 16),
+                                                            Text(
+                                                              'Satır Sayısı: ${(guideData['rows'] as List).length}',
+                                                              style: const TextStyle(fontWeight: FontWeight.bold),
                                                             ),
-                                                          );
-                                                        })),
-                                                    if ((guideData['rows']
-                                                                as List)
-                                                            .length >
-                                                        5)
-                                                      Text(
-                                                        '... ve ${(guideData['rows'] as List).length - 5} satır daha',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontStyle:
-                                                              FontStyle.italic,
-                                                          color:
-                                                              Colors.grey[600],
+                                                            const SizedBox(height: 8),
+                                                            const Text('Kılavuz Detayları:'),
+                                                            const SizedBox(height: 8),
+                                                            ...((guideData['rows'] as List).take(5).map((row) {
+                                                              return Padding(
+                                                                padding: const EdgeInsets.only(bottom: 4),
+                                                                child: Text(
+                                                                  '• ${row['serumType']} - Yaş: ${row['ageRange']}',
+                                                                  style: const TextStyle(fontSize: 12),
+                                                                ),
+                                                              );
+                                                            })),
+                                                            if ((guideData['rows'] as List).length > 5)
+                                                              Text(
+                                                                '... ve ${(guideData['rows'] as List).length - 5} satır daha',
+                                                                style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  fontStyle: FontStyle.italic,
+                                                                  color: Colors.grey[600],
+                                                                ),
+                                                              ),
+                                                          ],
                                                         ),
                                                       ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(context),
+                                                          child: const Text('Kapat'),
+                                                        ),
+                                                        ElevatedButton.icon(
+                                                          onPressed: () {
+                                                            Navigator.pop(context);
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    KilavuzScreen(guideDataToEdit: guideData),
+                                                              ),
+                                                            ).then((_) => _loadGuides());
+                                                          },
+                                                          icon: const Icon(Icons.edit, size: 18),
+                                                          label: const Text('Düzenle'),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: primaryColor,
+                                                            foregroundColor: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            itemBuilder: (context) => [
+                                              const PopupMenuItem(
+                                                value: 'view',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.visibility, size: 20, color: primaryColor),
+                                                    SizedBox(width: 8),
+                                                    Text('Detayları Görüntüle'),
                                                   ],
                                                 ),
                                               ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: const Text('Kapat'),
+                                              const PopupMenuItem(
+                                                value: 'edit',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.edit, size: 20, color: primaryColor),
+                                                    SizedBox(width: 8),
+                                                    Text('Düzenle'),
+                                                  ],
                                                 ),
-                                                ElevatedButton.icon(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            KilavuzScreen(
-                                                              guideDataToEdit:
-                                                                  guideData,
-                                                            ),
-                                                      ),
-                                                    ).then(
-                                                      (_) => _loadGuides(),
-                                                    );
-                                                  },
-                                                  icon: const Icon(
-                                                    Icons.edit,
-                                                    size: 18,
-                                                  ),
-                                                  label: const Text('Düzenle'),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                        backgroundColor:
-                                                            const Color(
-                                                              0xFF0058A3,
-                                                            ),
-                                                        foregroundColor:
-                                                            Colors.white,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    itemBuilder: (context) => [
-                                      const PopupMenuItem(
-                                        value: 'view',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.visibility,
-                                              size: 20,
-                                              color: Color(0xFF0058A3),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Text('Detayları Görüntüle'),
-                                          ],
-                                        ),
-                                      ),
-                                      const PopupMenuItem(
-                                        value: 'edit',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.edit,
-                                              size: 20,
-                                              color: Color(0xFF0058A3),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Text('Düzenle'),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                              ),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     )
@@ -626,13 +490,11 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                             icon: Container(
                                               padding: const EdgeInsets.all(8),
                                               decoration: BoxDecoration(
+                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
                                                 color: Colors.red.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
-                                              child: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
-                                              ),
+                                              child: const Icon(Icons.delete, color: Colors.red),
                                             ),
                                             onPressed: () async {
                                               final confirmed = await showDialog<bool>(
@@ -644,13 +506,11 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                                   ),
                                                   actions: [
                                                     TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(context, false),
+                                                      onPressed: () => Navigator.pop(context, false),
                                                       child: const Text('İptal'),
                                                     ),
                                                     ElevatedButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(context, true),
+                                                      onPressed: () => Navigator.pop(context, true),
                                                       style: ElevatedButton.styleFrom(
                                                         backgroundColor: Colors.red,
                                                         foregroundColor: Colors.white,
@@ -662,20 +522,16 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                               );
 
                                               if (confirmed == true && context.mounted) {
-                                                final success = await FirebaseService
-                                                    .deleteGuide(guideName);
+                                                final success = await FirebaseService.deleteGuide(guideName);
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
+                                                  ScaffoldMessenger.of(context).showSnackBar(
                                                     SnackBar(
                                                       content: Text(
                                                         success
                                                             ? 'Kılavuz başarıyla silindi!'
                                                             : 'Kılavuz silinirken bir hata oluştu!',
                                                       ),
-                                                      backgroundColor: success
-                                                          ? Colors.green
-                                                          : Colors.red,
+                                                      backgroundColor: success ? Colors.green : Colors.red,
                                                     ),
                                                   );
                                                   if (success) {
@@ -691,99 +547,60 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                             icon: Container(
                                               padding: const EdgeInsets.all(8),
                                               decoration: BoxDecoration(
-                                                color: const Color(
-                                                  0xFF0058A3,
-                                                ).withValues(alpha: 0.1),
+                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
+                                                color: primaryColor.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
-                                              child: const Icon(
-                                                Icons.more_vert,
-                                                color: Color(0xFF0058A3),
-                                              ),
+                                              child: const Icon(Icons.more_vert, color: primaryColor),
                                             ),
                                             onSelected: (value) async {
                                               if (value == 'edit') {
-                                                final guideData =
-                                                    await FirebaseService.getGuide(
-                                                      guideName,
-                                                    );
-                                                if (context.mounted &&
-                                                    guideData != null) {
+                                                final guideData = await FirebaseService.getGuide(guideName);
+                                                if (context.mounted && guideData != null) {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          KilavuzScreen(
-                                                            guideDataToEdit: guideData,
-                                                          ),
+                                                      builder: (context) => KilavuzScreen(guideDataToEdit: guideData),
                                                     ),
                                                   ).then((_) => _loadGuides());
                                                 }
                                               } else if (value == 'view') {
-                                                final guideData =
-                                                    await FirebaseService.getGuide(
-                                                      guideName,
-                                                    );
-                                                if (context.mounted &&
-                                                    guideData != null) {
+                                                final guideData = await FirebaseService.getGuide(guideName);
+                                                if (context.mounted && guideData != null) {
                                                   showDialog(
                                                     context: context,
                                                     builder: (context) => AlertDialog(
                                                       title: Text(guideName),
                                                       content: SingleChildScrollView(
                                                         child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment.start,
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
-                                                            Text(
-                                                              'Oluşturulma: $createdAt',
-                                                            ),
+                                                            Text('Oluşturulma: $createdAt'),
                                                             const SizedBox(height: 16),
                                                             Text(
                                                               'Satır Sayısı: ${(guideData['rows'] as List).length}',
-                                                              style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight.bold,
-                                                              ),
+                                                              style: const TextStyle(fontWeight: FontWeight.bold),
                                                             ),
                                                             const SizedBox(height: 8),
-                                                            const Text(
-                                                              'Kılavuz Detayları:',
-                                                            ),
+                                                            const Text('Kılavuz Detayları:'),
                                                             const SizedBox(height: 8),
-                                                            ...((guideData['rows']
-                                                                    as List)
-                                                                .take(5)
-                                                                .map((row) {
-                                                                  return Padding(
-                                                                    padding:
-                                                                        const EdgeInsets.only(
-                                                                          bottom: 4,
-                                                                        ),
-                                                                    child: Text(
-                                                                      '• ${row['serumType']} - Yaş: ${row['ageRange']}',
-                                                                      style:
-                                                                          const TextStyle(
-                                                                            fontSize:
-                                                                                12,
-                                                                          ),
-                                                                    ),
-                                                                  );
-                                                                })),
-                                                            if ((guideData['rows']
-                                                                        as List)
-                                                                    .length >
-                                                                5)
+                                                            ...((guideData['rows'] as List).take(5).map((row) {
+                                                              return Padding(
+                                                                padding: const EdgeInsets.only(bottom: 4),
+                                                                child: Text(
+                                                                  '• ${row['serumType']} - Yaş: ${row['ageRange']}',
+                                                                  style: const TextStyle(fontSize: 12),
+                                                                ),
+                                                              );
+                                                            })),
+                                                            if ((guideData['rows'] as List).length > 5)
                                                               Text(
                                                                 '... ve ${(guideData['rows'] as List).length - 5} satır daha',
                                                                 style: TextStyle(
                                                                   fontSize: 12,
-                                                                  fontStyle:
-                                                                      FontStyle.italic,
-                                                                  color:
-                                                                      Colors.grey[600],
+                                                                  fontStyle: FontStyle.italic,
+                                                                  color: Colors.grey[600],
                                                                 ),
                                                               ),
                                                           ],
@@ -791,8 +608,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                                       ),
                                                       actions: [
                                                         TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(context),
+                                                          onPressed: () => Navigator.pop(context),
                                                           child: const Text('Kapat'),
                                                         ),
                                                         ElevatedButton.icon(
@@ -802,29 +618,16 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                                               context,
                                                               MaterialPageRoute(
                                                                 builder: (context) =>
-                                                                    KilavuzScreen(
-                                                                      guideDataToEdit:
-                                                                          guideData,
-                                                                    ),
+                                                                    KilavuzScreen(guideDataToEdit: guideData),
                                                               ),
-                                                            ).then(
-                                                              (_) => _loadGuides(),
-                                                            );
+                                                            ).then((_) => _loadGuides());
                                                           },
-                                                          icon: const Icon(
-                                                            Icons.edit,
-                                                            size: 18,
-                                                          ),
+                                                          icon: const Icon(Icons.edit, size: 18),
                                                           label: const Text('Düzenle'),
-                                                          style:
-                                                              ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    const Color(
-                                                                      0xFF0058A3,
-                                                                    ),
-                                                                foregroundColor:
-                                                                    Colors.white,
-                                                              ),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: primaryColor,
+                                                            foregroundColor: Colors.white,
+                                                          ),
                                                         ),
                                                       ],
                                                     ),
@@ -837,11 +640,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                                 value: 'view',
                                                 child: Row(
                                                   children: [
-                                                    Icon(
-                                                      Icons.visibility,
-                                                      size: 20,
-                                                      color: Color(0xFF0058A3),
-                                                    ),
+                                                    Icon(Icons.visibility, size: 20, color: primaryColor),
                                                     SizedBox(width: 8),
                                                     Text('Detayları Görüntüle'),
                                                   ],
@@ -851,11 +650,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                                 value: 'edit',
                                                 child: Row(
                                                   children: [
-                                                    Icon(
-                                                      Icons.edit,
-                                                      size: 20,
-                                                      color: Color(0xFF0058A3),
-                                                    ),
+                                                    Icon(Icons.edit, size: 20, color: primaryColor),
                                                     SizedBox(width: 8),
                                                     Text('Düzenle'),
                                                   ],
@@ -883,12 +678,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
               onTap: (index) {
                 switch (index) {
                   case 0:
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const KilavuzScreen(),
-                      ),
-                    );
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const KilavuzScreen()));
                     break;
                   case 1:
                     // Zaten bu sayfadayız
@@ -896,25 +686,19 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                   case 2:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminDashboardScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
                     );
                     break;
                   case 3:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const TahlilEkleScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const TahlilEkleScreen()),
                     );
                     break;
                   case 4:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const TahlilListScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const TahlilListScreen()),
                     );
                     break;
                 }
@@ -925,22 +709,16 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
   }
 
   Widget _buildNavigationRail(BuildContext context) {
+    // Renkleri yeniden tanımla veya context'ten al
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
+
     return NavigationRail(
       selectedIndex: _selectedNavIndex,
       labelType: NavigationRailLabelType.all,
-      selectedIconTheme: IconThemeData(
-        color: Theme.of(context).colorScheme.primary,
-      ),
-      selectedLabelTextStyle: TextStyle(
-        color: Theme.of(context).colorScheme.primary,
-        fontWeight: FontWeight.bold,
-      ),
-      unselectedIconTheme: IconThemeData(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-      ),
-      unselectedLabelTextStyle: TextStyle(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-      ),
+      selectedIconTheme: IconThemeData(color: primaryColor),
+      selectedLabelTextStyle: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+      unselectedIconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+      unselectedLabelTextStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       destinations: const [
         NavigationRailDestination(
@@ -958,11 +736,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
           selectedIcon: Icon(Icons.list),
           label: Text('Kılavuz Listesi'),
         ),
-        NavigationRailDestination(
-          icon: Icon(Icons.add),
-          selectedIcon: Icon(Icons.add),
-          label: Text('Tahlil Ekle'),
-        ),
+        NavigationRailDestination(icon: Icon(Icons.add), selectedIcon: Icon(Icons.add), label: Text('Tahlil Ekle')),
         NavigationRailDestination(
           icon: Icon(Icons.assignment),
           selectedIcon: Icon(Icons.assignment),
@@ -980,41 +754,22 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
         });
         switch (index) {
           case 0:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminDashboardScreen(),
-              ),
-            );
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AdminDashboardScreen()));
             break;
           case 1:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const KilavuzScreen()),
-            );
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const KilavuzScreen()));
             break;
           case 2:
             // Zaten bu sayfadayız
             break;
           case 3:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const TahlilEkleScreen()),
-            );
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TahlilEkleScreen()));
             break;
           case 4:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const TahlilListScreen()),
-            );
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TahlilListScreen()));
             break;
           case 5:
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminProfileScreen(),
-              ),
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminProfileScreen()));
             break;
         }
       },
@@ -1022,29 +777,28 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
   }
 
   Widget _buildAdminDrawer(BuildContext context, bool isMobile) {
+    const Color primaryColor = Color(0xFF0058A3);
+    const Color accentColor = Color(0xFF00A8E8);
+
     return Drawer(
       child: ListView(
         children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
+          const DrawerHeader(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF0058A3), Color(0xFF00A8E8)],
+                colors: [primaryColor, accentColor],
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.local_hospital, color: Colors.white, size: 48),
-                const SizedBox(height: 8),
-                const Text(
+                Icon(Icons.local_hospital, color: Colors.white, size: 48),
+                SizedBox(height: 8),
+                Text(
                   'Doktor Paneli',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -1054,12 +808,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
             title: const Text('Ana Sayfa'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AdminDashboardScreen(),
-                ),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AdminDashboardScreen()));
             },
           ),
           ListTile(
@@ -1067,19 +816,15 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
             title: const Text('Kılavuz Oluştur'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const KilavuzScreen()),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const KilavuzScreen()));
             },
           ),
           ListTile(
             leading: const Icon(Icons.list),
             title: const Text('Kılavuz Listesi'),
             selected: true,
-            selectedTileColor: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.1),
+            // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
+            selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             onTap: () => Navigator.pop(context),
           ),
           ListTile(
@@ -1087,12 +832,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
             title: const Text('Tahlil Ekle'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TahlilEkleScreen(),
-                ),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TahlilEkleScreen()));
             },
           ),
           ListTile(
@@ -1100,21 +840,14 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
             title: const Text('Tahlil Listesi'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TahlilListScreen(),
-                ),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TahlilListScreen()));
             },
           ),
           const Divider(),
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, _) {
               return ListTile(
-                leading: Icon(
-                  themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                ),
+                leading: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
                 title: Text(themeProvider.isDarkMode ? 'Açık Mod' : 'Koyu Mod'),
                 onTap: () {
                   themeProvider.toggleTheme();
@@ -1127,12 +860,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
             title: const Text('Profil Ayarları'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AdminProfileScreen(),
-                ),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminProfileScreen()));
             },
           ),
           const Divider(),

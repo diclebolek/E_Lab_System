@@ -40,10 +40,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
         if (guideName != null) {
           final guideData = await FirebaseService.getGuide(guideName);
           if (guideData != null) {
-            guides.add({
-              'name': guideName,
-              'data': guideData['rows'] ?? [],
-            });
+            guides.add({'name': guideName, 'data': guideData['rows'] ?? []});
           }
         }
       }
@@ -65,7 +62,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
       await for (var data in FirebaseService.getTahlillerByTC(tc)) {
         allTahlillerList.add(data as Map<String, dynamic>);
       }
-      
+
       final previousTahliller = <TahlilModel>[];
 
       for (var data in allTahlillerList) {
@@ -78,9 +75,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
         final serumTypes = <SerumType>[];
         if (detail['serumTypes'] != null) {
           for (var s in detail['serumTypes'] as List) {
-            serumTypes.add(
-              SerumType(type: s['type'] ?? '', value: s['value'] ?? ''),
-            );
+            serumTypes.add(SerumType(type: s['type'] ?? '', value: s['value'] ?? ''));
           }
         }
 
@@ -89,9 +84,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
             id: data['id']?.toString() ?? '',
             fullName: data['fullName'] ?? '',
             tcNumber: data['tcNumber'] ?? '',
-            birthDate: data['birthDate'] != null
-                ? DateTime.tryParse(data['birthDate'].toString())
-                : null,
+            birthDate: data['birthDate'] != null ? DateTime.tryParse(data['birthDate'].toString()) : null,
             age: data['age'] ?? 0,
             gender: data['gender'] ?? '',
             patientType: data['patientType'] ?? '',
@@ -124,11 +117,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
     try {
       final parts = dateStr.split('/');
       if (parts.length >= 3) {
-        return DateTime(
-          int.parse(parts[2]),
-          int.parse(parts[1]),
-          int.parse(parts[0]),
-        );
+        return DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
       }
     } catch (e) {
       return null;
@@ -138,7 +127,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
 
   double? _getPreviousSerumValue(String serumType, List<TahlilModel> previousTahliller) {
     if (previousTahliller.isEmpty) return null;
-    
+
     // En son tahlilden önceki değeri bul
     for (var tahlil in previousTahliller) {
       for (var serum in tahlil.serumTypes) {
@@ -212,15 +201,13 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
       for (var row in guideData) {
         final ageRange = row['ageRange'] as String?;
         final rowSerumType = row['serumType'] as String?;
-        
+
         if (rowSerumType != serumType) continue;
         if (ageRange == null) continue;
 
         final parts = ageRange.split('-');
         final minAge = parts[0].isEmpty ? null : int.tryParse(parts[0]);
-        final maxAge = parts.length > 1 && parts[1].isNotEmpty
-            ? int.tryParse(parts[1])
-            : null;
+        final maxAge = parts.length > 1 && parts[1].isNotEmpty ? int.tryParse(parts[1]) : null;
 
         bool ageMatches = false;
         if (minAge != null && maxAge != null) {
@@ -237,37 +224,25 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
           final maxValue = _safeToDouble(row['max']);
           if (minValue != null && maxValue != null) {
             final arrow = _evaluateSerumValue(serumValue, minValue, maxValue);
-            return {
-              'arrow': arrow,
-              'range': '${row['min']}-${row['max']}',
-            };
+            return {'arrow': arrow, 'range': '${row['min']}-${row['max']}'};
           }
           final geoMeanMin = _safeToDouble(row['geoMeanMin']);
           final geoMeanMax = _safeToDouble(row['geoMeanMax']);
           if (geoMeanMin != null && geoMeanMax != null) {
             final arrow = _evaluateSerumValue(serumValue, geoMeanMin, geoMeanMax);
-            return {
-              'arrow': arrow,
-              'range': '${row['geoMeanMin']}-${row['geoMeanMax']}',
-            };
+            return {'arrow': arrow, 'range': '${row['geoMeanMin']}-${row['geoMeanMax']}'};
           }
           final arithMeanMin = _safeToDouble(row['arithMeanMin']);
           final arithMeanMax = _safeToDouble(row['arithMeanMax']);
           if (arithMeanMin != null && arithMeanMax != null) {
             final arrow = _evaluateSerumValue(serumValue, arithMeanMin, arithMeanMax);
-            return {
-              'arrow': arrow,
-              'range': '${row['arithMeanMin']}-${row['arithMeanMax']}',
-            };
+            return {'arrow': arrow, 'range': '${row['arithMeanMin']}-${row['arithMeanMax']}'};
           }
           final meanMin = _safeToDouble(row['meanMin']);
           final meanMax = _safeToDouble(row['meanMax']);
           if (meanMin != null && meanMax != null) {
             final arrow = _evaluateSerumValue(serumValue, meanMin, meanMax);
-            return {
-              'arrow': arrow,
-              'range': '${row['meanMin']}-${row['meanMax']}',
-            };
+            return {'arrow': arrow, 'range': '${row['meanMin']}-${row['meanMax']}'};
           }
         }
       }
@@ -323,11 +298,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                         const SizedBox(height: 8),
                         const Text(
                           'Hasta Paneli',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -352,14 +323,8 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                   Consumer<ThemeProvider>(
                     builder: (context, themeProvider, _) {
                       return ListTile(
-                        leading: Icon(
-                          themeProvider.isDarkMode
-                              ? Icons.light_mode
-                              : Icons.dark_mode,
-                        ),
-                        title: Text(
-                          themeProvider.isDarkMode ? 'Açık Mod' : 'Koyu Mod',
-                        ),
+                        leading: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                        title: Text(themeProvider.isDarkMode ? 'Açık Mod' : 'Koyu Mod'),
                         onTap: () {
                           themeProvider.toggleTheme();
                         },
@@ -377,10 +342,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text(
-                      'Çıkış Yap',
-                      style: TextStyle(color: Colors.red),
-                    ),
+                    title: const Text('Çıkış Yap', style: TextStyle(color: Colors.red)),
                     onTap: () async {
                       Navigator.pop(context);
                       await FirebaseService.signOut();
@@ -405,7 +367,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
           }
 
           final tahlil = TahlilModel.fromFirestore(snapshot.data!, widget.tahlilId);
-          
+
           // Önceki tahlilleri yükle (sadece bir kez)
           if (!_previousTahlillerLoaded) {
             _previousTahlillerLoaded = true;
@@ -424,24 +386,9 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoCard(
-                  context,
-                  'Adı Soyadı',
-                  tahlil.fullName,
-                  Icons.person,
-                ),
-                _buildInfoCard(
-                  context,
-                  'T.C. Kimlik No',
-                  tahlil.tcNumber,
-                  Icons.badge,
-                ),
-                _buildInfoCard(
-                  context,
-                  'Yaş (Yıl)',
-                  tahlil.age.toString(),
-                  Icons.cake,
-                ),
+                _buildInfoCard(context, 'Adı Soyadı', tahlil.fullName, Icons.person),
+                _buildInfoCard(context, 'T.C. Kimlik No', tahlil.tcNumber, Icons.badge),
+                _buildInfoCard(context, 'Yaş (Yıl)', tahlil.age.toString(), Icons.cake),
                 _buildInfoCard(
                   context,
                   'Cinsiyet',
@@ -454,20 +401,11 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                   tahlil.patientType.isEmpty ? '(Tanı girilmemiş)' : tahlil.patientType,
                   Icons.medical_information,
                 ),
-                _buildInfoCard(
-                  context,
-                  'Numune Türü',
-                  tahlil.sampleType,
-                  Icons.science,
-                ),
+                _buildInfoCard(context, 'Numune Türü', tahlil.sampleType, Icons.science),
                 const SizedBox(height: 20),
                 const Text(
                   'Serum Değerleri',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0058A3),
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0058A3)),
                 ),
                 const SizedBox(height: 10),
                 if (_previousTahliller.isNotEmpty) ...[
@@ -479,19 +417,11 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.trending_up,
-                          color: Color(0xFF0058A3),
-                          size: 20,
-                        ),
+                        const Icon(Icons.trending_up, color: Color(0xFF0058A3), size: 20),
                         const SizedBox(width: 8),
                         const Text(
                           'Değişim Analizi Aktif',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF0058A3),
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 12, color: Color(0xFF0058A3), fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -503,13 +433,11 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                   final evaluation = _evaluateSerumForAge(tahlil, serum.type, serumValue);
                   final previousValue = _getPreviousSerumValue(serum.type, _previousTahliller);
                   final changeIndicator = _getChangeIndicator(serumValue, previousValue);
-                  
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 10),
                     elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: ListTile(
                       leading: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -521,10 +449,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                               decoration: BoxDecoration(
                                 color: _getArrowColor(evaluation['arrow']!).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _getArrowColor(evaluation['arrow']!),
-                                  width: 2,
-                                ),
+                                border: Border.all(color: _getArrowColor(evaluation['arrow']!), width: 2),
                               ),
                               child: Center(
                                 child: Text(
@@ -537,8 +462,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                                 ),
                               ),
                             ),
-                          if (evaluation != null && previousValue != null)
-                            const SizedBox(width: 8),
+                          if (evaluation != null && previousValue != null) const SizedBox(width: 8),
                           if (previousValue != null)
                             Container(
                               width: 40,
@@ -546,10 +470,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                               decoration: BoxDecoration(
                                 color: _getChangeColor(changeIndicator).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _getChangeColor(changeIndicator),
-                                  width: 2,
-                                ),
+                                border: Border.all(color: _getChangeColor(changeIndicator), width: 2),
                               ),
                               child: Center(
                                 child: Text(
@@ -590,10 +511,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                                 Flexible(
                                   child: Text(
                                     '• Normal Aralık: ${evaluation['range']} mg/dl',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -604,11 +522,7 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Önceki: $previousValue mg/dl',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontStyle: FontStyle.italic,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
                             ),
                           ],
                         ],
@@ -674,28 +588,25 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
     );
   }
 
+  // ignore: unused_element
   Future<void> _deleteTahlil() async {
     final tahlilData = await FirebaseService.getTahlilById(widget.tahlilId);
     if (tahlilData == null) return;
 
     final tahlilName = tahlilData['fullName'] ?? 'Tahlil';
-    
+
+    if (!mounted) return;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Tahlili Sil'),
         content: Text('Bu tahlili silmek istediğinizden emin misiniz?\n\n$tahlilName\n\nBu işlem geri alınamaz.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('Sil'),
           ),
         ],
@@ -704,22 +615,16 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
 
     if (confirm == true && mounted) {
       final success = await FirebaseService.deleteTahlil(widget.tahlilId);
-      
+
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tahlil başarıyla silindi.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tahlil başarıyla silindi.'), backgroundColor: Colors.green));
         // Tahlil listesine geri dön
         Navigator.pop(context);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tahlil silinirken bir hata oluştu.'),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('Tahlil silinirken bir hata oluştu.'), backgroundColor: Colors.red),
         );
       }
     }
@@ -733,24 +638,12 @@ class _UserTahlilDetailScreenState extends State<UserTahlilDetailScreen> {
           backgroundColor: const Color(0xFF0058A3).withValues(alpha: 0.1),
           child: Icon(icon, color: const Color(0xFF0058A3)),
         ),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
+        title: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         subtitle: Text(
           value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0058A3),
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058A3)),
         ),
       ),
     );
   }
-
 }
-

@@ -23,7 +23,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
   List<TahlilModel> _previousTahliller = [];
   String? _currentPatientType;
   int _refreshKey = 0;
-  
+
   // Düzenlenebilir alanlar için güncel değerler
   String? _currentFullName;
   String? _currentTCNumber;
@@ -53,7 +53,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
 
   double? _getPreviousSerumValue(String serumType, List<TahlilModel> previousTahliller) {
     if (previousTahliller.isEmpty) return null;
-    
+
     // En son tahlilden önceki değeri bul
     for (var tahlil in previousTahliller) {
       for (var serum in tahlil.serumTypes) {
@@ -72,7 +72,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
       await for (var data in FirebaseService.getTahlillerByTC(tc)) {
         allTahlillerList.add(data as Map<String, dynamic>);
       }
-      
+
       final previousTahliller = <TahlilModel>[];
 
       for (var data in allTahlillerList) {
@@ -85,9 +85,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
         final serumTypes = <SerumType>[];
         if (detail['serumTypes'] != null) {
           for (var s in detail['serumTypes'] as List) {
-            serumTypes.add(
-              SerumType(type: s['type'] ?? '', value: s['value'] ?? ''),
-            );
+            serumTypes.add(SerumType(type: s['type'] ?? '', value: s['value'] ?? ''));
           }
         }
 
@@ -96,9 +94,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
             id: data['id']?.toString() ?? '',
             fullName: data['fullName'] ?? '',
             tcNumber: data['tcNumber'] ?? '',
-            birthDate: data['birthDate'] != null
-                ? DateTime.tryParse(data['birthDate'].toString())
-                : null,
+            birthDate: data['birthDate'] != null ? DateTime.tryParse(data['birthDate'].toString()) : null,
             age: data['age'] ?? 0,
             gender: data['gender'] ?? '',
             patientType: data['patientType'] ?? '',
@@ -131,11 +127,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
     try {
       final parts = dateStr.split('/');
       if (parts.length >= 3) {
-        return DateTime(
-          int.parse(parts[2]),
-          int.parse(parts[1]),
-          int.parse(parts[0]),
-        );
+        return DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
       }
     } catch (e) {
       return null;
@@ -155,17 +147,11 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
             if (snapshot.hasData && snapshot.data != null) {
               final tahlil = TahlilModel.fromFirestore(snapshot.data!, widget.tahlilId);
               return isMobile
-                  ? Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(tahlil.fullName),
-                    )
+                  ? Align(alignment: Alignment.centerLeft, child: Text(tahlil.fullName))
                   : Text(tahlil.fullName);
             }
             return isMobile
-                ? const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Tahlil Detayı'),
-                  )
+                ? const Align(alignment: Alignment.centerLeft, child: Text('Tahlil Detayı'))
                 : const Text('Tahlil Detayı');
           },
         ),
@@ -204,7 +190,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
           }
 
           final tahlil = TahlilModel.fromFirestore(snapshot.data!, widget.tahlilId);
-          
+
           // Güncel değerleri başlat (sadece bir kez)
           if (_currentFullName == null) {
             _currentFullName = tahlil.fullName;
@@ -214,7 +200,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
             _currentPatientType = tahlil.patientType;
             _currentSampleType = tahlil.sampleType;
           }
-          
+
           // Önceki tahlilleri yükle
           _loadPreviousTahliller(tahlil.tcNumber);
 
@@ -224,33 +210,22 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildEditableInfoCard(
-                  'Adı Soyadı',
-                  _currentFullName ?? tahlil.fullName,
-                  Icons.person,
-                  'fullName',
-                ),
-                _buildEditableInfoCard(
-                  'T.C. Kimlik No',
-                  _currentTCNumber ?? tahlil.tcNumber,
-                  Icons.badge,
-                  'tcNumber',
-                ),
-                _buildEditableInfoCard(
-                  'Yaş (Yıl)',
-                  (_currentAge ?? tahlil.age).toString(),
-                  Icons.cake,
-                  'age',
-                ),
+                _buildEditableInfoCard('Adı Soyadı', _currentFullName ?? tahlil.fullName, Icons.person, 'fullName'),
+                _buildEditableInfoCard('T.C. Kimlik No', _currentTCNumber ?? tahlil.tcNumber, Icons.badge, 'tcNumber'),
+                _buildEditableInfoCard('Yaş (Yıl)', (_currentAge ?? tahlil.age).toString(), Icons.cake, 'age'),
                 _buildEditableInfoCard(
                   'Cinsiyet',
-                  (_currentGender ?? tahlil.gender).isEmpty ? '(Cinsiyet girilmemiş)' : (_currentGender ?? tahlil.gender),
+                  (_currentGender ?? tahlil.gender).isEmpty
+                      ? '(Cinsiyet girilmemiş)'
+                      : (_currentGender ?? tahlil.gender),
                   Icons.wc,
                   'gender',
                 ),
                 _buildEditableInfoCard(
                   'Hastalık Tanısı',
-                  (_currentPatientType ?? tahlil.patientType).isEmpty ? '(Tanı girilmemiş)' : (_currentPatientType ?? tahlil.patientType),
+                  (_currentPatientType ?? tahlil.patientType).isEmpty
+                      ? '(Tanı girilmemiş)'
+                      : (_currentPatientType ?? tahlil.patientType),
                   Icons.local_hospital,
                   'patientType',
                 ),
@@ -266,11 +241,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                   children: [
                     const Text(
                       'Serum Değerleri',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0058A3),
-                      ),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0058A3)),
                     ),
                     if (_previousTahliller.isNotEmpty) ...[
                       const SizedBox(width: 8),
@@ -282,11 +253,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                         ),
                         child: const Text(
                           'Değişim Analizi Aktif',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF0058A3),
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 12, color: Color(0xFF0058A3), fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -297,7 +264,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                   final currentValue = double.tryParse(serum.value) ?? 0.0;
                   final previousValue = _getPreviousSerumValue(serum.type, _previousTahliller);
                   final changeIndicator = _getChangeIndicator(currentValue, previousValue);
-                  
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
@@ -308,10 +275,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                               decoration: BoxDecoration(
                                 color: _getChangeColor(changeIndicator).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _getChangeColor(changeIndicator),
-                                  width: 2,
-                                ),
+                                border: Border.all(color: _getChangeColor(changeIndicator), width: 2),
                               ),
                               child: Center(
                                 child: Text(
@@ -332,10 +296,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                       subtitle: previousValue != null
                           ? Text(
                               'Önceki: $previousValue mg/dl',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                             )
                           : null,
                       trailing: previousValue != null
@@ -371,41 +332,28 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                   case 0:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminDashboardScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
                     );
                     break;
                   case 1:
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const KilavuzScreen(),
-                      ),
-                    );
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const KilavuzScreen()));
                     break;
                   case 2:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const KilavuzListScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const KilavuzListScreen()),
                     );
                     break;
                   case 3:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const TahlilEkleScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const TahlilEkleScreen()),
                     );
                     break;
                   case 4:
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const TahlilListScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const TahlilListScreen()),
                     );
                     break;
                 }
@@ -423,17 +371,10 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
           backgroundColor: const Color(0xFF0058A3).withValues(alpha: 0.1),
           child: Icon(icon, color: const Color(0xFF0058A3)),
         ),
-        title: Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        title: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         subtitle: Text(
           value.isEmpty ? '(Girilmemiş)' : value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0058A3),
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058A3)),
         ),
       ),
     );
@@ -456,21 +397,11 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   const SizedBox(height: 4),
                   Text(
                     value,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0058A3),
-                    ),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058A3)),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -496,19 +427,15 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
     );
   }
 
-  Future<void> _showEditDialog(
-    String label,
-    String currentValue,
-    String fieldName,
-  ) async {
+  Future<void> _showEditDialog(String label, String currentValue, String fieldName) async {
     final TextEditingController controller = TextEditingController(text: currentValue);
-    
+
     Widget? content;
-    
+
     // Cinsiyet için dropdown
     if (fieldName == 'gender') {
       String? selectedGender = currentValue.isEmpty || currentValue == '(Cinsiyet girilmemiş)' ? null : currentValue;
-      
+
       final result = await showDialog<String>(
         context: context,
         builder: (dialogContext) => StatefulBuilder(
@@ -516,11 +443,8 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
             return AlertDialog(
               title: Text('$label Düzenle'),
               content: DropdownButtonFormField<String>(
-                value: selectedGender,
-                decoration: const InputDecoration(
-                  labelText: 'Cinsiyet',
-                  border: OutlineInputBorder(),
-                ),
+                initialValue: selectedGender,
+                decoration: const InputDecoration(labelText: 'Cinsiyet', border: OutlineInputBorder()),
                 items: const [
                   DropdownMenuItem(value: 'Erkek', child: Text('Erkek')),
                   DropdownMenuItem(value: 'Kadın', child: Text('Kadın')),
@@ -532,10 +456,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
                 },
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('İptal'),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal')),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, selectedGender ?? ''),
                   style: ElevatedButton.styleFrom(
@@ -549,22 +470,18 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
           },
         ),
       );
-      
+
       if (result != null && result != currentValue && result != '(Cinsiyet girilmemiş)') {
         await _updateField(fieldName, result);
       }
       return;
     }
-    
+
     // Yaş için sayı inputu
     if (fieldName == 'age') {
       content = TextField(
         controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: 'Yaş girin',
-          border: const OutlineInputBorder(),
-        ),
+        decoration: InputDecoration(labelText: label, hintText: 'Yaş girin', border: const OutlineInputBorder()),
         keyboardType: TextInputType.number,
         autofocus: true,
       );
@@ -572,32 +489,22 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
       // Diğer alanlar için normal text input
       content = TextField(
         controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: '$label girin',
-          border: const OutlineInputBorder(),
-        ),
+        decoration: InputDecoration(labelText: label, hintText: '$label girin', border: const OutlineInputBorder()),
         maxLines: fieldName == 'patientType' ? 3 : 1,
         autofocus: true,
       );
     }
-    
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('$label Düzenle'),
         content: content,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0058A3),
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0058A3), foregroundColor: Colors.white),
             child: const Text('Kaydet'),
           ),
         ],
@@ -611,7 +518,7 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
 
   Future<void> _updateField(String fieldName, String value) async {
     Map<String, dynamic> updates = {};
-    
+
     if (fieldName == 'fullName') {
       updates['fullName'] = value;
       _currentFullName = value;
@@ -625,12 +532,9 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
         _currentAge = age;
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Geçerli bir yaş giriniz'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Geçerli bir yaş giriniz'), backgroundColor: Colors.red));
         }
         return;
       }
@@ -653,20 +557,13 @@ class _TahlilDetailScreenState extends State<TahlilDetailScreen> {
       setState(() {
         _refreshKey++; // Sayfayı yenile
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$fieldName başarıyla güncellendi!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$fieldName başarıyla güncellendi!'), backgroundColor: Colors.green));
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Güncelleme sırasında bir hata oluştu'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Güncelleme sırasında bir hata oluştu'), backgroundColor: Colors.red),
       );
     }
   }
 }
-

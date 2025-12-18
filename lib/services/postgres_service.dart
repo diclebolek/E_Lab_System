@@ -64,10 +64,6 @@ class PostgresService {
       final tcTrimmed = tc.trim();
       final passwordTrimmed = password.trim();
 
-      print('🔍 Kullanıcı Giriş Denemesi:');
-      print('   TC (trimmed): "$tcTrimmed"');
-      print('   Şifre (trimmed): "$passwordTrimmed"');
-
       final result = await conn.execute(
         Sql.named(
           'SELECT id, tc_number, password_hash, full_name FROM users '
@@ -76,42 +72,28 @@ class PostgresService {
         parameters: {'tc': tcTrimmed},
       );
 
-      print('   Sorgu sonucu: ${result.length} kayıt bulundu');
-
       if (result.isEmpty) {
-        print('   ❌ TC bulunamadı veya is_deleted = TRUE');
         return null;
       }
 
       final row = result.first;
       final storedPassword = (row[2] as String?)?.trim() ?? '';
 
-      print('   Veritabanındaki şifre hash: "${storedPassword.substring(0, storedPassword.length > 20 ? 20 : storedPassword.length)}..."');
-      print('   Şifre hash uzunluğu: ${storedPassword.length}');
-
       // Şifreyi hash'le
       final passwordHash = _hashPassword(passwordTrimmed);
-      print('   Giriş şifresi hash: "${passwordHash.substring(0, 20)}..."');
 
       // Hash'li şifre ile karşılaştır (yeni kayıtlar için)
       // Eğer hash eşleşmezse, düz metin ile karşılaştır (eski kayıtlar için geriye dönük uyumluluk)
       final isPasswordValid = passwordHash == storedPassword || passwordTrimmed == storedPassword;
 
-      print('   Hash eşleşmesi: ${passwordHash == storedPassword}');
-      print('   Düz metin eşleşmesi: ${passwordTrimmed == storedPassword}');
-      print('   Şifre geçerli: $isPasswordValid');
-
       if (!isPasswordValid) {
-        print('   ❌ Şifre eşleşmedi!');
         return null;
       }
 
       _currentUserId = row[0] as int;
-      print('   ✅ Giriş başarılı! Kullanıcı ID: $_currentUserId');
 
       return {'id': row[0], 'tc_number': row[1], 'full_name': row[3]};
     } catch (e) {
-      print('   ❌ HATA: $e');
       return null;
     }
   }
@@ -182,10 +164,6 @@ class PostgresService {
       final tcTrimmed = tc.trim();
       final passwordTrimmed = password.trim();
 
-      print('🔍 Admin Giriş Denemesi:');
-      print('   TC (trimmed): "$tcTrimmed"');
-      print('   Şifre (trimmed): "$passwordTrimmed"');
-
       final result = await conn.execute(
         Sql.named(
           'SELECT id, password_hash FROM admins '
@@ -194,41 +172,27 @@ class PostgresService {
         parameters: {'tc': tcTrimmed},
       );
 
-      print('   Sorgu sonucu: ${result.length} kayıt bulundu');
-
       if (result.isEmpty) {
-        print('   ❌ TC bulunamadı veya is_active = FALSE');
         return false;
       }
 
       final row = result.first;
       final storedPassword = (row[1] as String?)?.trim() ?? '';
 
-      print('   Veritabanındaki şifre hash: "${storedPassword.substring(0, storedPassword.length > 20 ? 20 : storedPassword.length)}..."');
-      print('   Şifre hash uzunluğu: ${storedPassword.length}');
-
       // Şifreyi hash'le
       final passwordHash = _hashPassword(passwordTrimmed);
-      print('   Giriş şifresi hash: "${passwordHash.substring(0, 20)}..."');
 
       // Hash'li şifre ile karşılaştır (yeni kayıtlar için)
       // Eğer hash eşleşmezse, düz metin ile karşılaştır (eski kayıtlar için geriye dönük uyumluluk)
       final isPasswordValid = passwordHash == storedPassword || passwordTrimmed == storedPassword;
 
-      print('   Hash eşleşmesi: ${passwordHash == storedPassword}');
-      print('   Düz metin eşleşmesi: ${passwordTrimmed == storedPassword}');
-      print('   Şifre geçerli: $isPasswordValid');
-
       if (!isPasswordValid) {
-        print('   ❌ Şifre eşleşmedi!');
         return false;
       }
 
       _currentAdminId = row[0] as int;
-      print('   ✅ Giriş başarılı! Admin ID: $_currentAdminId');
       return true;
     } catch (e) {
-      print('   ❌ HATA: $e');
       return false;
     }
   }
@@ -238,7 +202,7 @@ class PostgresService {
     try {
       final conn = await _getConnection();
 
-      // TC'ye göre kullanıcı ID'sini bul
+      // TC'ye göre kullanıcı ID'sini bul veya oluştur
       int? userId;
       final tcNumber = tahlilData['tcNumber']?.toString().trim() ?? '';
       if (tcNumber.isNotEmpty) {
@@ -249,6 +213,39 @@ class PostgresService {
 
         if (userResult.isNotEmpty) {
           userId = userResult.first[0] as int;
+        } else {
+          // Kullanıcı yoksa otomatik oluştur (TC kimlik numarası varsayılan şifre olarak)
+          final passwordHash = _hashPassword(tcNumber);
+
+          // Doğum tarihini parse et
+          DateTime? birthDateForUser;
+          if (tahlilData['birthDate'] != null) {
+            if (tahlilData['birthDate'] is DateTime) {
+              birthDateForUser = tahlilData['birthDate'] as DateTime;
+            } else {
+              birthDateForUser = DateTime.tryParse(tahlilData['birthDate'].toString());
+            }
+          }
+
+          final insertResult = await conn.execute(
+            Sql.named(
+              'INSERT INTO users (tc_number, password_hash, full_name, gender, age, birth_date) '
+              'VALUES (@tc, @password, @fullName, @gender, @age, @birthDate) '
+              'RETURNING id',
+            ),
+            parameters: {
+              'tc': tcNumber,
+              'password': passwordHash,
+              'fullName': tahlilData['fullName'],
+              'gender': tahlilData['gender'],
+              'age': tahlilData['age'],
+              'birthDate': birthDateForUser?.toIso8601String().split('T')[0],
+            },
+          );
+
+          if (insertResult.isNotEmpty) {
+            userId = insertResult.first[0] as int;
+          }
         }
       }
 
@@ -722,13 +719,58 @@ class PostgresService {
       }
 
       final conn = await _getConnection();
-      // Geçici olarak düz metin saklama (hash'leme yapılmadığı için)
+      final passwordHash = _hashPassword(newPassword.trim());
       await conn.execute(
         Sql.named(
           'UPDATE users SET password_hash = @password, updated_at = CURRENT_TIMESTAMP '
           'WHERE id = @id',
         ),
-        parameters: {'id': _currentUserId, 'password': newPassword.trim()},
+        parameters: {'id': _currentUserId, 'password': passwordHash},
+      );
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Şifre değiştirme (mevcut şifre doğrulamalı)
+  static Future<bool> changePassword(String currentPassword, String newPassword) async {
+    try {
+      if (_currentUserId == null) {
+        return false;
+      }
+
+      final conn = await _getConnection();
+
+      // Mevcut şifreyi doğrula
+      final result = await conn.execute(
+        Sql.named('SELECT password_hash FROM users WHERE id = @id'),
+        parameters: {'id': _currentUserId},
+      );
+
+      if (result.isEmpty) {
+        return false;
+      }
+
+      final storedPassword = (result.first[0] as String?)?.trim() ?? '';
+      final currentPasswordHash = _hashPassword(currentPassword.trim());
+
+      // Hash'li veya düz metin şifre ile karşılaştır
+      final isCurrentPasswordValid = currentPasswordHash == storedPassword || currentPassword.trim() == storedPassword;
+
+      if (!isCurrentPasswordValid) {
+        return false;
+      }
+
+      // Yeni şifreyi güncelle
+      final newPasswordHash = _hashPassword(newPassword.trim());
+      await conn.execute(
+        Sql.named(
+          'UPDATE users SET password_hash = @password, updated_at = CURRENT_TIMESTAMP '
+          'WHERE id = @id',
+        ),
+        parameters: {'id': _currentUserId, 'password': newPasswordHash},
       );
 
       return true;

@@ -15,7 +15,8 @@ class UserTahlilListScreen extends StatefulWidget {
 }
 
 class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
-  String _sortOrder = 'desc'; // 'asc' veya 'desc'
+  final String _sortOrder = 'desc'; // 'asc' veya 'desc'
+  // ignore: unused_field
   int _refreshKey = 0; // Listeyi yenilemek için key
 
   String _userTC = '';
@@ -52,9 +53,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
 
       if (detail != null && detail['serumTypes'] != null) {
         for (final s in detail['serumTypes'] as List) {
-          serumTypes.add(
-            SerumType(type: s['type'] ?? '', value: s['value'] ?? ''),
-          );
+          serumTypes.add(SerumType(type: s['type'] ?? '', value: s['value'] ?? ''));
         }
       }
 
@@ -75,9 +74,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
           id: data['id']?.toString() ?? '',
           fullName: data['fullName'] ?? '',
           tcNumber: data['tcNumber'] ?? '',
-          birthDate: data['birthDate'] != null
-              ? DateTime.tryParse(data['birthDate'].toString())
-              : null,
+          birthDate: data['birthDate'] != null ? DateTime.tryParse(data['birthDate'].toString()) : null,
           age: age,
           gender: data['gender'] ?? '',
           patientType: data['patientType'] ?? '',
@@ -90,7 +87,6 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
 
     return tahliller;
   }
-
 
   List<TahlilModel> _sortTahliller(List<TahlilModel> tahliller) {
     final sorted = List<TahlilModel>.from(tahliller);
@@ -115,11 +111,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
     try {
       final parts = dateStr.split('/');
       if (parts.length >= 3) {
-        return DateTime(
-          int.parse(parts[2]),
-          int.parse(parts[1]),
-          int.parse(parts[0]),
-        );
+        return DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
       }
     } catch (e) {
       return null;
@@ -127,6 +119,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
     return null;
   }
 
+  // ignore: unused_element
   Future<void> _deleteTahlil(String tahlilId, String tahlilName) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -134,16 +127,10 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
         title: const Text('Tahlili Sil'),
         content: Text('Bu tahlili silmek istediğinizden emin misiniz?\n\n$tahlilName\n\nBu işlem geri alınamaz.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('Sil'),
           ),
         ],
@@ -152,23 +139,17 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
 
     if (confirm == true && mounted) {
       final success = await FirebaseService.deleteTahlil(tahlilId);
-      
+
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tahlil başarıyla silindi.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tahlil başarıyla silindi.'), backgroundColor: Colors.green));
         setState(() {
           _refreshKey++; // Listeyi yenile
         });
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tahlil silinirken bir hata oluştu.'),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('Tahlil silinirken bir hata oluştu.'), backgroundColor: Colors.red),
         );
       }
     }
@@ -186,10 +167,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: isMobile
-            ? const Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Tahlil Listesi'),
-              )
+            ? const Align(alignment: Alignment.centerLeft, child: Text('Tahlil Listesi'))
             : const Text('Tahlil Listesi'),
         automaticallyImplyLeading: false,
         centerTitle: !isMobile,
@@ -232,11 +210,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
                         const SizedBox(height: 8),
                         const Text(
                           'Hasta Paneli',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -245,9 +219,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
                     leading: const Icon(Icons.assignment),
                     title: const Text('Tahliller'),
                     selected: true,
-                    selectedTileColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     onTap: () => Navigator.pop(context),
                   ),
                   ListTile(
@@ -262,14 +234,8 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
                   Consumer<ThemeProvider>(
                     builder: (context, themeProvider, _) {
                       return ListTile(
-                        leading: Icon(
-                          themeProvider.isDarkMode
-                              ? Icons.light_mode
-                              : Icons.dark_mode,
-                        ),
-                        title: Text(
-                          themeProvider.isDarkMode ? 'Açık Mod' : 'Koyu Mod',
-                        ),
+                        leading: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                        title: Text(themeProvider.isDarkMode ? 'Açık Mod' : 'Koyu Mod'),
                         onTap: () {
                           themeProvider.toggleTheme();
                         },
@@ -287,10 +253,7 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text(
-                      'Çıkış Yap',
-                      style: TextStyle(color: Colors.red),
-                    ),
+                    title: const Text('Çıkış Yap', style: TextStyle(color: Colors.red)),
                     onTap: () async {
                       Navigator.pop(context);
                       await FirebaseService.signOut();
@@ -310,225 +273,171 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : FutureBuilder<List<TahlilModel>>(
-              key: ValueKey(_refreshKey),
-              future: _loadTahliller(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                    key: ValueKey(_refreshKey),
+                    future: _loadTahliller(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                if (snapshot.hasError) {
-                  return Center(child: Text('Hata: ${snapshot.error}'));
-                }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Hata: ${snapshot.error}'));
+                      }
 
-                List<TahlilModel> tahliller = snapshot.data ?? [];
+                      List<TahlilModel> tahliller = snapshot.data ?? [];
 
-                final sortedTahliller = _sortTahliller(tahliller);
+                      final sortedTahliller = _sortTahliller(tahliller);
 
-                if (sortedTahliller.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.assignment_outlined,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Henüz tahlil bulunmamaktadır',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
+                      if (sortedTahliller.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.assignment_outlined, size: 80, color: Colors.grey[400]),
+                              const SizedBox(height: 20),
+                              Text(
+                                'Henüz tahlil bulunmamaktadır',
+                                style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                        );
+                      }
 
-                return Expanded(
-                      child: ListView.builder(
-                        padding: EdgeInsets.only(
-                          left: isMobile ? 16 : 24,
-                          right: isMobile ? 16 : 24,
-                          top: 16,
-                          bottom: isMobile ? 80 : 24, // Bottom navigation bar için ekstra alan
-                        ),
-                        itemCount: sortedTahliller.length,
-                        itemBuilder: (context, index) {
-                          final tahlil = sortedTahliller[index];
-                          return Card(
-                            margin: EdgeInsets.only(
-                              bottom: 16,
-                              left: isMobile ? 0 : 8,
-                              right: isMobile ? 0 : 8,
-                            ),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/user-tahlil-detail',
-                                  arguments: {'tahlilId': tahlil.id},
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Colors.white,
-                                      const Color(
-                                        0xFF0058A3,
-                                      ).withValues(alpha: 0.02),
-                                    ],
+                      return Expanded(
+                        child: ListView.builder(
+                          padding: EdgeInsets.only(
+                            left: isMobile ? 16 : 24,
+                            right: isMobile ? 16 : 24,
+                            top: 16,
+                            bottom: isMobile ? 80 : 24, // Bottom navigation bar için ekstra alan
+                          ),
+                          itemCount: sortedTahliller.length,
+                          itemBuilder: (context, index) {
+                            final tahlil = sortedTahliller[index];
+                            return Card(
+                              margin: EdgeInsets.only(bottom: 16, left: isMobile ? 0 : 8, right: isMobile ? 0 : 8),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/user-tahlil-detail',
+                                    arguments: {'tahlilId': tahlil.id},
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [Colors.white, const Color(0xFF0058A3).withValues(alpha: 0.02)],
+                                    ),
                                   ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFF0058A3),
-                                                Color(0xFF00A8E8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 60,
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFF0058A3), Color(0xFF00A8E8)],
+                                              ),
+                                              borderRadius: BorderRadius.circular(14),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: const Color(0xFF0058A3).withValues(alpha: 0.3),
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 6),
+                                                ),
                                               ],
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFF0058A3,
-                                                ).withValues(alpha: 0.3),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 6),
-                                              ),
-                                            ],
+                                            child: const Icon(Icons.assignment, color: Colors.white, size: 28),
                                           ),
-                                          child: const Icon(
-                                            Icons.assignment,
-                                            color: Colors.white,
-                                            size: 28,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                tahlil.fullName,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                  color: Color(0xFF0058A3),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  tahlil.fullName,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                    color: Color(0xFF0058A3),
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              if (tahlil.patientType.isNotEmpty) ...[
+                                                const SizedBox(height: 6),
+                                                if (tahlil.patientType.isNotEmpty) ...[
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.medical_information,
+                                                        size: 14,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Expanded(
+                                                        child: Text(
+                                                          tahlil.patientType,
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: Colors.grey[700],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                ],
                                                 Row(
                                                   children: [
-                                                    Icon(
-                                                      Icons.medical_information,
-                                                      size: 14,
-                                                      color: Colors.grey[600],
-                                                    ),
+                                                    Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
                                                     const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        tahlil.patientType,
-                                                        style: TextStyle(
-                                                          fontSize: 13,
-                                                          color: Colors.grey[700],
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
+                                                    Text(
+                                                      tahlil.reportDate,
+                                                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                                                     ),
                                                   ],
                                                 ),
-                                                const SizedBox(height: 4),
                                               ],
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.calendar_today,
-                                                    size: 14,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    tahlil.reportDate,
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.grey[600],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: const Color(
-                                              0xFF0058A3,
-                                            ).withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
                                             ),
                                           ),
-                                          child: const Icon(
-                                            Icons.chevron_right,
-                                            color: Color(0xFF0058A3),
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF0058A3).withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: const Icon(Icons.chevron_right, color: Color(0xFF0058A3)),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (tahlil.serumTypes.isNotEmpty) ...[
-                                      const SizedBox(height: 16),
-                                      const Divider(),
-                                      const SizedBox(height: 12),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: tahlil.serumTypes.take(4).map(
-                                          (serum) {
+                                        ],
+                                      ),
+                                      if (tahlil.serumTypes.isNotEmpty) ...[
+                                        const SizedBox(height: 16),
+                                        const Divider(),
+                                        const SizedBox(height: 12),
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: tahlil.serumTypes.take(4).map((serum) {
                                             return Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 6,
-                                                  ),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                               decoration: BoxDecoration(
-                                                color: const Color(
-                                                  0xFF00A8E8,
-                                                ).withValues(alpha: 0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
+                                                color: const Color(0xFF00A8E8).withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(20),
                                                 border: Border.all(
-                                                  color: const Color(
-                                                    0xFF00A8E8,
-                                                  ).withValues(alpha: 0.3),
+                                                  color: const Color(0xFF00A8E8).withValues(alpha: 0.3),
                                                 ),
                                               ),
                                               child: Text(
@@ -540,34 +449,31 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
                                                 ),
                                               ),
                                             );
-                                          },
-                                        ).toList(),
-                                      ),
-                                      if (tahlil.serumTypes.length > 4)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 8,
-                                          ),
-                                          child: Text(
-                                            '+${tahlil.serumTypes.length - 4} daha',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                              fontStyle: FontStyle.italic,
+                                          }).toList(),
+                                        ),
+                                        if (tahlil.serumTypes.length > 4)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 8),
+                                            child: Text(
+                                              '+${tahlil.serumTypes.length - 4} daha',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                                fontStyle: FontStyle.italic,
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                );
-              },
-            ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -593,19 +499,10 @@ class _UserTahlilListScreenState extends State<UserTahlilListScreen> {
     return NavigationRail(
       selectedIndex: _selectedNavIndex,
       labelType: NavigationRailLabelType.all,
-      selectedIconTheme: IconThemeData(
-        color: Theme.of(context).colorScheme.primary,
-      ),
-      selectedLabelTextStyle: TextStyle(
-        color: Theme.of(context).colorScheme.primary,
-        fontWeight: FontWeight.bold,
-      ),
-      unselectedIconTheme: IconThemeData(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-      ),
-      unselectedLabelTextStyle: TextStyle(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-      ),
+      selectedIconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
+      selectedLabelTextStyle: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+      unselectedIconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+      unselectedLabelTextStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       destinations: const [
         NavigationRailDestination(
