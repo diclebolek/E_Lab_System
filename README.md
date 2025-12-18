@@ -1,4 +1,4 @@
-# E-Laboratuvar Sistemi - Flutter
+# E-Laboratuvar Sistemi
 
 Bu proje, laboratuvar tahlillerini yönetmek için geliştirilmiş modern bir Flutter uygulamasıdır.
 
