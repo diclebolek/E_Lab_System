@@ -291,9 +291,8 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                   ),
                                   // Sağ üstte küçük ikonlar (mobilde)
                                   if (isMobile)
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
+                                    Align(
+                                      alignment: Alignment.topRight,
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -304,7 +303,8 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                             icon: Container(
                                               padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
-                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
+                                                // Sil ikonunu konteyner sağ kenarına daha fazla yaklaştırmak için
+                                                // üç nokta ile aynı boyutta ve stilde tutuyoruz.
                                                 color: Colors.red.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
@@ -357,7 +357,7 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                             },
                                             tooltip: 'Sil',
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 4),
                                           // Mobilde sağ üstte üç nokta ikonu
                                           PopupMenuButton<String>(
                                             padding: EdgeInsets.zero,
@@ -479,22 +479,22 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                       ),
                                     )
                                   else
-                                    // Desktop görünümünde eski yapı
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
+                                    // Masaüstü görünümünde de aynı hizada, sağ üstte yanyana ikonlar
+                                    Align(
+                                      alignment: Alignment.topRight,
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
                                             icon: Container(
-                                              padding: const EdgeInsets.all(8),
+                                              padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
-                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
                                                 color: Colors.red.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius: BorderRadius.circular(6),
                                               ),
-                                              child: const Icon(Icons.delete, color: Colors.red),
+                                              child: const Icon(Icons.delete, color: Colors.red, size: 18),
                                             ),
                                             onPressed: () async {
                                               final confirmed = await showDialog<bool>(
@@ -544,14 +544,14 @@ class _KilavuzListScreenState extends State<KilavuzListScreen> {
                                           ),
                                           const SizedBox(width: 8),
                                           PopupMenuButton<String>(
+                                            padding: EdgeInsets.zero,
                                             icon: Container(
-                                              padding: const EdgeInsets.all(8),
+                                              padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
-                                                // HATA DÜZELTİLDİ: .withValues(alpha: 0.1) -> .withValues(alpha:0.1)
                                                 color: primaryColor.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius: BorderRadius.circular(6),
                                               ),
-                                              child: const Icon(Icons.more_vert, color: primaryColor),
+                                              child: const Icon(Icons.more_vert, color: primaryColor, size: 18),
                                             ),
                                             onSelected: (value) async {
                                               if (value == 'edit') {

@@ -135,10 +135,17 @@ class _PatientTahlilHistoryScreenState extends State<PatientTahlilHistoryScreen>
     return null;
   }
 
-  // Yaşı formatla (bebekler için ay, diğerleri için yıl)
+  // Yaşı formatla: manuel yaş değeri varsa onu kullan, yoksa doğum tarihinden hesapla
   String _formatAge(TahlilModel tahlil) {
-    if (tahlil.birthDate == null) {
+    // Admin tahlil detay ekranından girilen / güncellenen yaş bilgisi
+    // varsa (0'dan büyükse) doğum tarihine bakmadan bunu göster.
+    if (tahlil.age > 0) {
       return '${tahlil.age} yıl';
+    }
+
+    // Yaş alanı boşsa, doğum tarihinden otomatik hesapla
+    if (tahlil.birthDate == null) {
+      return '-';
     }
 
     final now = DateTime.now();

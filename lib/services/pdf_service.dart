@@ -298,6 +298,28 @@ class PdfService {
       }
     }
 
+    // Eğer yukarıdaki klasik regex yaklaşımı yeterli serum değeri bulamazsa,
+    // "Parametre / Sonuç" tablosu formatını özel olarak ele al.
+    //
+    // Örneğin OCR metni şu yapıda geldi:
+    // Parametre
+    // IgA
+    // IgM
+    // IgG
+    // IgG1
+    // ...
+    // Sonuç
+    // 210 mg
+    // 115 mg.
+    // 1320 mc
+    // ...
+    final tableSerums = _parseSerumTable(extractedText);
+    if (tableSerums.isNotEmpty) {
+      serumTypes
+        ..clear()
+        ..addAll(tableSerums);
+    }
+
     data['serumTypes'] = serumTypes;
 
     // Rapor Tarihi - OCR'dan çıkar
@@ -342,6 +364,92 @@ class PdfService {
     }
 
     return data;
+  }
+
+  /// OCR çıktısında "Parametre" ve "Sonuç" başlıklarıyla gelen tabloyu parse eder.
+  /// Örnek yapı:
+  /// Parametre
+  /// IgA
+  /// IgM
+  /// IgG
+  /// IgG1
+  /// ...
+  /// Sonuç
+  /// 210 mg
+  /// 115 mg.
+  /// 1320 mc
+  /// ...
+  static List<Map<String, String>> _parseSerumTable(String extractedText) {
+    final result = <Map<String, String>>[];
+
+    final lines = extractedText.split(RegExp(r'[\r\n]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+
+    if (lines.isEmpty) return result;
+
+    final paramIndex = lines.indexWhere((l) => l.toLowerCase().startsWith('parametre'));
+    final sonucIndex = lines.indexWhere((l) => l.toLowerCase().startsWith('sonuç'));
+
+    if (paramIndex == -1 || sonucIndex == -1 || sonucIndex <= paramIndex + 1) {
+      return result;
+    }
+
+    final paramLines = lines.sublist(paramIndex + 1, sonucIndex);
+    final valueLines = lines.sublist(sonucIndex + 1);
+
+    // Parametre isimlerini normalize et (OCR hatalarını tolere et)
+    final paramNames = <String>[];
+    for (final raw in paramLines) {
+      final upper = raw.toUpperCase();
+      String? mapped;
+
+      if (upper.contains('IGA') || upper.contains('LGA')) {
+        mapped = 'IgA';
+      } else if (upper.contains('IGM') || upper.contains('LGM')) {
+        mapped = 'IgM';
+      } else if (upper.contains('IGG1') || upper.contains('LGG1')) {
+        mapped = 'IgG1';
+      } else if (upper.contains('IGG2') || upper.contains('LGG2')) {
+        mapped = 'IgG2';
+      } else if (upper.contains('IGG3') || upper.contains('LGG3')) {
+        mapped = 'IgG3';
+      } else if (upper.contains('IGG4') || upper.contains('LGG4')) {
+        mapped = 'IgG4';
+      } else if (upper.contains('IGG') || upper.contains('LGG')) {
+        mapped = 'IgG';
+      }
+
+      if (mapped != null && !paramNames.contains(mapped)) {
+        paramNames.add(mapped);
+      }
+    }
+
+    if (paramNames.isEmpty) return result;
+
+    // Değer satırlarından ilk sayısal ifadeyi çek
+    final values = <String>[];
+    final valueRegex = RegExp(r'([0-9]+(?:[.,][0-9]+)?)');
+    for (final raw in valueLines) {
+      final match = valueRegex.firstMatch(raw);
+      if (match != null) {
+        var v = (match.group(1) ?? '').replaceAll(',', '.').trim();
+        if (v.isNotEmpty) {
+          values.add(v);
+        }
+      }
+    }
+
+    final count = paramNames.length < values.length ? paramNames.length : values.length;
+    for (var i = 0; i < count; i++) {
+      final type = paramNames[i];
+      final value = values[i];
+      // Mantıklı aralık filtresi
+      final numValue = double.tryParse(value);
+      if (numValue != null && numValue > 0 && numValue < 100000) {
+        result.add({'type': type, 'value': value});
+      }
+    }
+
+    return result;
   }
 
   // Kameradan fotoğraf çekme
@@ -428,12 +536,20 @@ class PdfService {
 
       // OCR ile metin çıkar
       final extractedText = await extractTextFromImage(image);
+      // DEBUG: OCR'dan gelen ham metni logla
+      // Böylece hangi formatta okunduğunu terminalde görebiliriz.
+      // Not: Üretimde istenirse bu satır silinebilir.
+      // ignore: avoid_print
+      print('OCR CAMERA extractedText:\\n$extractedText');
       if (extractedText.isEmpty) {
         throw Exception('Fotoğraftan metin çıkarılamadı. Lütfen fotoğrafın net ve okunabilir olduğundan emin olun.');
       }
 
       // Metni parse et
       final parsedData = parseTahlilData(extractedText);
+      // DEBUG: Parse edilmiş veriyi logla
+      // ignore: avoid_print
+      print('OCR CAMERA parsedData = $parsedData');
 
       return parsedData;
     } catch (e) {
@@ -452,12 +568,18 @@ class PdfService {
 
       // OCR ile metin çıkar
       final extractedText = await extractTextFromImage(image);
+      // DEBUG: OCR'dan gelen ham metni logla
+      // ignore: avoid_print
+      print('OCR GALLERY extractedText:\\n$extractedText');
       if (extractedText.isEmpty) {
         return null;
       }
 
       // Metni parse et
       final parsedData = parseTahlilData(extractedText);
+      // DEBUG: Parse edilmiş veriyi logla
+      // ignore: avoid_print
+      print('OCR GALLERY parsedData = $parsedData');
 
       return parsedData;
     } catch (e) {

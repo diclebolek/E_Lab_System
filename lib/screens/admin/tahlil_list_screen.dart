@@ -162,18 +162,42 @@ class _TahlilListScreenState extends State<TahlilListScreen> {
   }
 
   DateTime? _parseDate(String dateStr) {
+    if (dateStr.isEmpty) return null;
+
+    // 1) Önce doğrudan DateTime.parse ile (PostgreSQL'in döndürdüğü
+    //    "2026-02-12 10:30:00.000Z" vb. formatları) dene.
     try {
-      final parts = dateStr.split('/');
-      if (parts.length == 3) {
-        return DateTime(
-          int.parse(parts[2]),
-          int.parse(parts[1]),
-          int.parse(parts[0]),
-        );
-      }
-    } catch (e) {
-      return null;
+      return DateTime.parse(dateStr);
+    } catch (_) {
+      // yoksay
     }
+
+    // 2) Eğer bu formatta değilse, GG/AA/YYYY veya GG/AA/YYYY HH:mm formatını dene.
+    try {
+      final dateTimeParts = dateStr.split(' ');
+      final datePart = dateTimeParts[0];
+      final parts = datePart.split('/');
+      if (parts.length == 3) {
+        final day = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final year = int.parse(parts[2]);
+
+        int hour = 0;
+        int minute = 0;
+        if (dateTimeParts.length > 1) {
+          final timeParts = dateTimeParts[1].split(':');
+          if (timeParts.length >= 2) {
+            hour = int.tryParse(timeParts[0]) ?? 0;
+            minute = int.tryParse(timeParts[1]) ?? 0;
+          }
+        }
+
+        return DateTime(year, month, day, hour, minute);
+      }
+    } catch (_) {
+      // Geçersizse null döneceğiz
+    }
+
     return null;
   }
 

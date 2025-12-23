@@ -498,6 +498,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Adınızı ve soyadınızı girin',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : null,
                                 prefixIcon: const Icon(Icons.person),
                               ),
                             ),
@@ -515,6 +519,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Doğum tarihinizi seçin',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : null,
                                 prefixIcon: const Icon(Icons.calendar_today),
                                 suffixIcon: IconButton(icon: const Icon(Icons.date_range), onPressed: _selectBirthDate),
                               ),
@@ -532,6 +540,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Yaşınızı girin',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : null,
                                 prefixIcon: const Icon(Icons.cake),
                               ),
                               keyboardType: TextInputType.number,
@@ -549,6 +561,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Cinsiyet seçin',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : null,
                                 prefixIcon: const Icon(Icons.wc),
                               ),
                               items: const [
@@ -574,6 +590,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Kan grubunuzu seçin',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : null,
                                 prefixIcon: const Icon(Icons.bloodtype),
                               ),
                               items: const [
@@ -605,6 +625,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Acil durum telefon numaranızı girin',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[900]
+                                    : null,
                                 prefixIcon: const Icon(Icons.phone),
                               ),
                               keyboardType: TextInputType.phone,

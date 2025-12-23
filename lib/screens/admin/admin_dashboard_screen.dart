@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../services/firebase_service.dart';
 import '../../services/pdf_service.dart';
 import '../../widgets/admin_bottom_nav_bar.dart';
@@ -51,6 +52,79 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  /// OCR'dan okunan verilerden tahlil kaydı oluşturur ve veritabanına yazar.
+  /// Böylece hasta, TC kimliği (ve varsayılan şifresi TC'si) ile sisteme girip
+  /// kendi tahlil sonuçlarını görebilir.
+  Future<void> _saveTahlilFromParsedData(Map<String, dynamic> parsedData) async {
+    try {
+      // Serum tiplerini list'e çevir
+      final serumTypes = <Map<String, String>>[];
+      if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
+        final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
+        for (var serum in serumList) {
+          final type = (serum['type'] as String?)?.trim() ?? '';
+          final value = (serum['value'] as String?)?.trim() ?? '';
+          if (type.isNotEmpty && value.isNotEmpty) {
+            serumTypes.add({'type': type, 'value': value});
+          }
+        }
+      }
+
+      if (serumTypes.isEmpty) return;
+
+      // Doğum tarihi
+      DateTime? birthDate;
+      if (parsedData['birthDate'] is DateTime) {
+        birthDate = parsedData['birthDate'] as DateTime;
+      }
+
+      // Numune tarihi
+      DateTime? sampleDate;
+      if (parsedData['sampleDate'] is DateTime) {
+        sampleDate = parsedData['sampleDate'] as DateTime;
+      }
+
+      // Yaş bilgisi
+      int age = _age;
+      if (parsedData['age'] is int) {
+        age = parsedData['age'] as int;
+      }
+
+      // Rapor tarihi
+      String reportDate;
+      if (parsedData['reportDate'] is String && (parsedData['reportDate'] as String).trim().isNotEmpty) {
+        reportDate = parsedData['reportDate'] as String;
+      } else {
+        reportDate = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+      }
+
+      final fullName = (parsedData['fullName'] ?? _fullNameController.text).toString().trim();
+      final tcNumber = (parsedData['tcNumber'] ?? _tcController.text).toString().trim();
+
+      if (fullName.isEmpty || tcNumber.isEmpty) {
+        // Zorunlu alanlar yoksa kaydetme
+        return;
+      }
+
+      final tahlilData = {
+        'fullName': fullName,
+        'tcNumber': tcNumber,
+        'birthDate': birthDate,
+        'age': age,
+        'gender': (parsedData['gender'] ?? _gender).toString(),
+        'patientType': (parsedData['patientType'] ?? 'Bilinmiyor').toString(),
+        'sampleType': (parsedData['sampleType'] ?? 'Serum').toString(),
+        'sampleDate': sampleDate,
+        'serumTypes': serumTypes,
+        'reportDate': reportDate,
+      };
+
+      await FirebaseService.addTahlil(tahlilData);
+    } catch (_) {
+      // Değerlendirme ekranını etkilememek için hata bastırılıyor
+    }
   }
 
   Future<void> _loadGuides() async {
@@ -444,12 +518,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return;
       }
 
-      // Doğum tarihini doldur (setState dışında controller'ı güncelle)
-      String? formattedDate;
-      if (parsedData['birthDate'] != null && parsedData['birthDate'] is DateTime) {
-        final birthDate = parsedData['birthDate'] as DateTime;
-        formattedDate =
-            '${birthDate.day.toString().padLeft(2, '0')}/${birthDate.month.toString().padLeft(2, '0')}/${birthDate.year}';
+      // Serum değerlerini map'e al (type -> value)
+      final serumMap = <String, String>{};
+      if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
+        final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
+        for (var serum in serumList) {
+          final type = (serum['type'] as String?) ?? '';
+          final value = (serum['value'] as String?) ?? '';
+          if (type.isNotEmpty && value.isNotEmpty) {
+            serumMap[type] = value;
+
+            // OCR'dan gelen her yeni serum tipi için mutlaka bir input alanı oluştur.
+            if (!_serumControllers.containsKey(type)) {
+              _serumControllers[type] = TextEditingController();
+              if (!_serumTypes.contains(type)) {
+                _serumTypes.add(type);
+              }
+            }
+          }
+        }
       }
 
       // setState içinde tüm değişiklikleri yap
@@ -466,7 +553,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }
 
         // Doğum tarihini doldur
-        if (formattedDate != null) {
+        if (parsedData['birthDate'] != null && parsedData['birthDate'] is DateTime) {
+          final birthDate = parsedData['birthDate'] as DateTime;
+          final formattedDate =
+              '${birthDate.day.toString().padLeft(2, '0')}/${birthDate.month.toString().padLeft(2, '0')}/${birthDate.year}';
           _birthDateController.text = formattedDate;
           // TextField'ı force rebuild etmek için key'i değiştir
           _textFieldKey++;
@@ -478,28 +568,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _age = parsedData['age'] as int;
         }
 
-        // Serum değerlerini doldur
-        if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
-          final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
-          int filledCount = 0;
-          for (var serum in serumList) {
-            final type = (serum['type'] as String?) ?? '';
-            final value = (serum['value'] as String?) ?? '';
-            if (type.isNotEmpty && _serumControllers.containsKey(type) && value.isNotEmpty) {
-              _serumControllers[type]!.text = value;
-              filledCount++;
+        // Serum değerlerini controller'lara dağıt (tip tip)
+        if (serumMap.isNotEmpty) {
+          serumMap.forEach((type, value) {
+            final controller = _serumControllers[type];
+            if (controller != null) {
+              controller.text = value;
             }
-          }
-          // Serum TextField'larını force rebuild etmek için key'i değiştir
-          if (filledCount > 0) {
-            _textFieldKey++;
-          }
+          });
+
+          // Değerlendirme kartlarını otomatik güncelle
+          _handleEvaluate();
+
+          // OCR ile okunan tahlili veritabanına kaydet
+          _saveTahlilFromParsedData(parsedData);
+
+          // Değerlendirme alanlarını force rebuild etmek için key'i değiştir
+          _textFieldKey++;
         }
       });
 
       if (mounted) {
         final filledCount = parsedData.containsKey('birthDate') || parsedData.containsKey('age') ? 1 : 0;
-        final serumCount = parsedData['serumTypes'] != null && parsedData['serumTypes'] is List ? (parsedData['serumTypes'] as List).length : 0;
+        final serumCount = parsedData['serumTypes'] != null && parsedData['serumTypes'] is List
+            ? (parsedData['serumTypes'] as List).length
+            : 0;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -555,12 +648,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return;
       }
 
-      // Doğum tarihini doldur (setState dışında controller'ı güncelle)
-      String? formattedDate;
-      if (parsedData['birthDate'] != null && parsedData['birthDate'] is DateTime) {
-        final birthDate = parsedData['birthDate'] as DateTime;
-        formattedDate =
-            '${birthDate.day.toString().padLeft(2, '0')}/${birthDate.month.toString().padLeft(2, '0')}/${birthDate.year}';
+      // Serum değerlerini map'e al (type -> value)
+      final serumMap = <String, String>{};
+      if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
+        final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
+        for (var serum in serumList) {
+          final type = (serum['type'] as String?) ?? '';
+          final value = (serum['value'] as String?) ?? '';
+          if (type.isNotEmpty && value.isNotEmpty) {
+            serumMap[type] = value;
+
+            // OCR'dan gelen her serum tipinin ekranda bir input'u olduğundan emin ol.
+            if (!_serumControllers.containsKey(type)) {
+              _serumControllers[type] = TextEditingController();
+              if (!_serumTypes.contains(type)) {
+                _serumTypes.add(type);
+              }
+            }
+          }
+        }
       }
 
       // setState içinde tüm değişiklikleri yap
@@ -577,7 +683,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }
 
         // Doğum tarihini doldur
-        if (formattedDate != null) {
+        if (parsedData['birthDate'] != null && parsedData['birthDate'] is DateTime) {
+          final birthDate = parsedData['birthDate'] as DateTime;
+          final formattedDate =
+              '${birthDate.day.toString().padLeft(2, '0')}/${birthDate.month.toString().padLeft(2, '0')}/${birthDate.year}';
           _birthDateController.text = formattedDate;
           // TextField'ı force rebuild etmek için key'i değiştir
           _textFieldKey++;
@@ -589,28 +698,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _age = parsedData['age'] as int;
         }
 
-        // Serum değerlerini doldur
-        if (parsedData['serumTypes'] != null && parsedData['serumTypes'] is List) {
-          final serumList = (parsedData['serumTypes'] as List).whereType<Map>().toList();
-          int filledCount = 0;
-          for (var serum in serumList) {
-            final type = (serum['type'] as String?) ?? '';
-            final value = (serum['value'] as String?) ?? '';
-            if (type.isNotEmpty && _serumControllers.containsKey(type) && value.isNotEmpty) {
-              _serumControllers[type]!.text = value;
-              filledCount++;
+        // Serum değerlerini controller'lara dağıt (tip tip)
+        if (serumMap.isNotEmpty) {
+          serumMap.forEach((type, value) {
+            final controller = _serumControllers[type];
+            if (controller != null) {
+              controller.text = value;
             }
-          }
-          // Serum TextField'larını force rebuild etmek için key'i değiştir
-          if (filledCount > 0) {
-            _textFieldKey++;
-          }
+          });
+
+          // Değerlendirme kartlarını otomatik güncelle
+          _handleEvaluate();
+
+          // OCR ile okunan tahlili veritabanına kaydet
+          _saveTahlilFromParsedData(parsedData);
+
+          // Değerlendirme alanlarını force rebuild etmek için key'i değiştir
+          _textFieldKey++;
         }
       });
 
       if (mounted) {
         final filledCount = parsedData.containsKey('birthDate') || parsedData.containsKey('age') ? 1 : 0;
-        final serumCount = parsedData['serumTypes'] != null && parsedData['serumTypes'] is List ? (parsedData['serumTypes'] as List).length : 0;
+        final serumCount = parsedData['serumTypes'] != null && parsedData['serumTypes'] is List
+            ? (parsedData['serumTypes'] as List).length
+            : 0;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1296,90 +1408,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text('Serum Değerleri:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: _serumTypes.map((type) {
-                      final value = double.tryParse(_serumControllers[type]!.text.trim());
-                      final evaluation = value != null && _age > 0 ? _getSerumEvaluation(type, value) : null;
-                      final statusColor = evaluation != null ? _getArrowColor(evaluation['arrow']) : Colors.grey;
-                      final statusIcon = evaluation != null ? _getStatusIcon(evaluation['arrow']) : Icons.help_outline;
-
-                      return SizedBox(
-                        width: isMobile ? double.infinity : 200,
-                        child: TextField(
-                          key: ValueKey('serum_${type}_$_textFieldKey'), // UI güncellemesi için key
-                          controller: _serumControllers[type],
-                          decoration: InputDecoration(
-                            labelText: type,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: statusColor.withValues(alpha: 0.5), width: 2),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: statusColor.withValues(alpha: 0.5), width: 2),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: statusColor, width: 2),
-                            ),
-                            prefixIcon: Container(
-                              margin: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: statusColor, width: 2),
-                              ),
-                              child: Icon(statusIcon, color: statusColor, size: 20),
-                            ),
-                            suffixIcon: evaluation != null
-                                ? Container(
-                                    margin: const EdgeInsets.all(8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: statusColor, width: 1),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        evaluation['arrow'],
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: statusColor),
-                                      ),
-                                    ),
-                                  )
-                                : null,
-                            helperText: evaluation != null
-                                ? '${evaluation['rangeType']}: ${evaluation['range']} mg/dl'
-                                : _age > 0
-                                ? 'Değer girin'
-                                : 'Önce yaş bilgisini girin',
-                            helperMaxLines: 2,
-                            filled: true,
-                            fillColor: statusColor.withValues(alpha: 0.03),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            setState(() {
-                              // Değerlendirmeyi güncellemek için state'i tetikle
-                            });
-                          },
-                        ),
-                      );
-                    }).toList(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Kamera veya galeriden okunan serum sonuçlarının ayrıntılı değerlendirmesi aşağıdaki kartlarda gösterilmektedir.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _handleEvaluate,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      child: const Text('Değerlendir'),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 24),
                   if (_evaluationResults.isNotEmpty) ...[
                     const Text(
                       'Kılavuzlara Göre Değerlendirmeler',

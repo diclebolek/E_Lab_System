@@ -897,15 +897,22 @@ class _KilavuzScreenState extends State<KilavuzScreen> {
             tooltip: 'Kılavuz Oluşturma Adımları',
             onPressed: () {
               showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Row(
-                    children: [
-                      Icon(Icons.info_outline, color: kPrimaryColor),
-                      SizedBox(width: 8),
-                      Text('Kılavuz Oluşturma Adımları'),
-                    ],
-                  ),
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Row(
+                  children: const [
+                    Icon(Icons.info_outline, color: kPrimaryColor),
+                    SizedBox(width: 8),
+                    // Uzun başlık metninin küçük ekranlarda sağdan taşmaması için
+                    // Expanded + ellipsis kullanıyoruz.
+                    Expanded(
+                      child: Text(
+                        'Kılavuz Oluşturma Adımları',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,

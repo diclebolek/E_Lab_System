@@ -349,8 +349,13 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                                           : 'Şifre değiştirmek için düzenle',
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                       prefixIcon: const Icon(Icons.lock),
-                                      filled: !_isEditingPassword,
-                                      fillColor: _isEditingPassword ? null : Colors.grey[100],
+                                      filled: true,
+                                      // Koyu modda beyaz yerine daha koyu bir arka plan kullan
+                                      fillColor: _isEditingPassword
+                                          ? null
+                                          : (Theme.of(context).brightness == Brightness.dark
+                                                ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.8)
+                                                : Colors.grey[100]),
                                     ),
                                   ),
                                 ],
@@ -371,7 +376,10 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    // Tema butonu için arka planı temaya göre ayarla
+                                    color: themeProvider.isDarkMode
+                                        ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.9)
+                                        : Colors.white,
                                     border: Border.all(color: const Color(0xFF0058A3), width: 1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -730,14 +738,18 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
               maxLength: maxLength,
               decoration: InputDecoration(
                 hintText: '$label girin',
-                hintStyle: isDark && !isEditing ? TextStyle(color: Colors.black.withValues(alpha: 0.6)) : null,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: Icon(icon, color: isDark && !isEditing ? Colors.black : null),
+                prefixIcon: Icon(icon, color: theme.colorScheme.primary),
                 counterText: maxLength != null ? null : '',
-                filled: !isEditing,
-                fillColor: !isEditing ? (isDark ? Colors.white : Colors.grey[100]) : null,
+                // Düzenleme modunda değilken bile, koyu modda beyaz yerine
+                // kart arka planına yakın koyu bir renk kullan.
+                filled: true,
+                fillColor: isEditing
+                    ? null
+                    : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.7) : Colors.grey[100]),
               ),
-              style: isDark && !isEditing ? const TextStyle(color: Colors.black) : null,
+              // Varsayılan tema metin renklerini kullan
+              style: null,
             ),
           ],
         ),

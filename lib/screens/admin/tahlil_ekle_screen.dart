@@ -40,6 +40,54 @@ class _TahlilEkleScreenState extends State<TahlilEkleScreen> {
   final _serumTypeOptions = ['IgG', 'IgG1', 'IgG2', 'IgG3', 'IgG4', 'IgA', 'IgA1', 'IgA2', 'IgM'];
 
   @override
+  void initState() {
+    super.initState();
+    // Kılavuzlarda tanımlı tüm serum tiplerini tetkik adı dropdown'ına dinamik olarak ekle
+    _loadSerumTypesFromGuides();
+  }
+
+  /// Kılavuzlarda tanımlı tüm serum tiplerini okuyup,
+  /// tetkik ekleme ekranındaki "Tetkik Adı" (serum tipi) dropdown'ına ekler.
+  Future<void> _loadSerumTypesFromGuides() async {
+    try {
+      final existing = <String>{..._serumTypeOptions};
+
+      // Tüm kılavuz isimlerini al
+      final guides = <Map<String, dynamic>>[];
+      await for (var guide in FirebaseService.getGuides()) {
+        if (guide is Map<String, dynamic>) {
+          guides.add(guide);
+        }
+      }
+
+      // Her kılavuz için satırları çek ve serumType alanlarını listeye ekle
+      for (final guide in guides) {
+        final guideName = guide['name'] as String?;
+        if (guideName == null) continue;
+
+        final guideData = await FirebaseService.getGuide(guideName);
+        final rows = guideData?['rows'] as List<dynamic>? ?? [];
+
+        for (final row in rows) {
+          if (row is Map && row['serumType'] != null) {
+            final type = row['serumType'].toString().trim();
+            if (type.isNotEmpty && !existing.contains(type)) {
+              existing.add(type);
+              _serumTypeOptions.add(type);
+            }
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (_) {
+      // Kılavuz okunamasa da ekran çalışmaya devam etsin; varsayılan tipler kullanılacak.
+    }
+  }
+
+  @override
   void dispose() {
     _fullNameController.dispose();
     _tcController.dispose();
