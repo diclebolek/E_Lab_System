@@ -858,83 +858,6 @@ Ana veritabanı servisi. Tüm CRUD işlemleri bu servis üzerinden yapılır.
 **Değerlendirme:**
 - `evaluateTahlil(DateTime birthDate, Map<String, double> serumValues, int kilavuzId)`: Tahlil değerlendirme
 
-### PDFService
-
-PDF oluşturma ve yönetim servisi.
-
-#### Önemli Metodlar
-
-- `generateTahlilPDF(Map<String, dynamic> tahlilData)`: Tahlil PDF'i oluşturma
-- PDF içeriği: Hasta bilgileri, serum değerleri, referans aralıkları, sonuçlar
-
-## Sorun Giderme
-
-### Veritabanı Bağlantı Sorunları
-
-**Problem:** "Connection refused" hatası
-- **Çözüm:** PostgreSQL servisinin çalıştığından emin olun
-  ```bash
-  # Windows
-  services.msc → PostgreSQL servisini başlatın
-  
-  # macOS
-  brew services start postgresql
-  
-  # Linux
-  sudo systemctl start postgresql
-  ```
-
-**Problem:** Android emülatörde bağlantı hatası
-- **Çözüm:** `database_config.dart` dosyasında host'u `10.0.2.2` olarak ayarlayın
-  ```dart
-  if (Platform.isAndroid) {
-    return '10.0.2.2';
-  }
-  ```
-
-**Problem:** "Database does not exist" hatası
-- **Çözüm:** Veritabanını oluşturun:
-  ```sql
-  CREATE DATABASE elab_system;
-  ```
-
-### Flutter Bağımlılık Sorunları
-
-**Problem:** `flutter pub get` hataları
-- **Çözüm:** 
-  ```bash
-  flutter clean
-  flutter pub get
-  flutter pub upgrade
-  ```
-
-**Problem:** Platform-specific hatalar
-- **Çözüm:** İlgili platform için gerekli araçları yükleyin:
-  ```bash
-  flutter doctor
-  # Eksik olanları yükleyin
-  ```
-
-### Uygulama Çalıştırma Sorunları
-
-**Problem:** Hot reload çalışmıyor
-- **Çözüm:** Uygulamayı yeniden başlatın:
-  ```bash
-  flutter run
-  # veya
-  r (hot reload)
-  R (hot restart)
-  ```
-
-**Problem:** Emülatör başlamıyor
-- **Çözüm:** 
-  ```bash
-  # Emülatörleri listeleyin
-  flutter emulators
-  
-  # Belirli bir emülatörü başlatın
-  flutter emulators --launch <emulator_id>
-  ```
 
 ## Güvenlik Notları
 
@@ -986,9 +909,6 @@ Bu proje eğitim amaçlı geliştirilmiştir.
 4. Branch'inizi push edin (`git push origin feature/AmazingFeature`)
 5. Pull Request oluşturun
 
-## İletişim
-
-Proje hakkında sorularınız için issue açabilirsiniz.
 
 ## Notlar
 
