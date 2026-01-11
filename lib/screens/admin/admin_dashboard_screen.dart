@@ -782,6 +782,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  // ignore: unused_element
   IconData _getStatusIcon(String arrow) {
     switch (arrow) {
       case '↓':
@@ -861,6 +862,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   // Belirli bir serum tipi için yaş aralığına göre değerlendirme al
+  // ignore: unused_element
   Map<String, dynamic>? _getSerumEvaluation(String serumType, double value) {
     if (_age == 0 || _guides.isEmpty) return null;
 
