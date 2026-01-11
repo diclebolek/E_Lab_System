@@ -264,14 +264,14 @@ flutter run -d chrome
 
 ```mermaid
 graph TB
-    subgraph "Kullanıcı Arayüzü Katmanı"
+    subgraph UI["User Interface Layer"]
         A[Flutter UI] --> B[Home Screen]
         A --> C[Login Screens]
         A --> D[User Screens]
         A --> E[Admin Screens]
     end
     
-    subgraph "İş Mantığı Katmanı"
+    subgraph BL["Business Logic Layer"]
         F[PostgresService] --> G[Authentication]
         F --> H[CRUD Operations]
         F --> I[Data Validation]
@@ -279,7 +279,7 @@ graph TB
         L[ThemeProvider] --> M[Theme Management]
     end
     
-    subgraph "Veri Katmanı"
+    subgraph DL["Data Layer"]
         N[(PostgreSQL Database)]
         N --> O[users]
         N --> P[admins]
@@ -305,22 +305,22 @@ graph TB
 
 ```mermaid
 erDiagram
-    users ||--o{ tahliller : "has"
-    admins ||--o{ tahliller : "creates"
-    admins ||--o{ kilavuzlar : "creates"
-    tahliller ||--o{ serum_types : "contains"
-    kilavuzlar ||--o{ kilavuz_rows : "has"
+    users ||--o{ tahliller : has
+    admins ||--o{ tahliller : creates
+    admins ||--o{ kilavuzlar : creates
+    tahliller ||--o{ serum_types : contains
+    kilavuzlar ||--o{ kilavuz_rows : has
     
     users {
         int id PK
-        string tc_number UK
-        string password_hash
-        string full_name
-        string gender
+        varchar tc_number UK
+        varchar password_hash
+        varchar full_name
+        varchar gender
         int age
         date birth_date
-        string blood_type
-        string emergency_contact
+        varchar blood_type
+        varchar emergency_contact
         timestamp created_at
         timestamp updated_at
         boolean is_deleted
@@ -328,10 +328,10 @@ erDiagram
     
     admins {
         int id PK
-        string email UK
-        string password_hash
-        string full_name
-        string tc_number UK
+        varchar email UK
+        varchar password_hash
+        varchar full_name
+        varchar tc_number UK
         timestamp created_at
         timestamp updated_at
         boolean is_active
@@ -341,14 +341,14 @@ erDiagram
         int id PK
         int user_id FK
         int created_by FK
-        string full_name
-        string tc_number
+        varchar full_name
+        varchar tc_number
         date birth_date
         int age
-        string gender
-        string patient_type
-        string sample_type
-        string report_date
+        varchar gender
+        varchar patient_type
+        varchar sample_type
+        varchar report_date
         timestamp created_at
         timestamp updated_at
     }
@@ -356,15 +356,15 @@ erDiagram
     serum_types {
         int id PK
         int tahlil_id FK
-        string type
-        string value
+        varchar type
+        varchar value
         timestamp created_at
     }
     
     kilavuzlar {
         int id PK
         int created_by FK
-        string guide_name UK
+        varchar guide_name UK
         timestamp created_at
         timestamp updated_at
     }
@@ -372,7 +372,7 @@ erDiagram
     kilavuz_rows {
         int id PK
         int kilavuz_id FK
-        string age_range
+        varchar age_range
         decimal geo_mean_min
         decimal geo_mean_max
         decimal mean_min
@@ -381,7 +381,7 @@ erDiagram
         decimal max_value
         decimal interval_min
         decimal interval_max
-        string serum_type
+        varchar serum_type
         decimal arith_mean_min
         decimal arith_mean_max
         timestamp created_at
@@ -392,37 +392,37 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    Start([Uygulama Başlatıldı]) --> Home[Home Screen]
-    Home --> Choice{Kullanıcı Tipi Seçimi}
+    Start([Application Started]) --> Home[Home Screen]
+    Home --> Choice{User Type Selection}
     
-    Choice -->|Hasta| UserLogin[User Login Screen<br/>TC + Şifre]
-    Choice -->|Doktor| AdminLogin[Admin Login Screen<br/>Email + Şifre]
+    Choice -->|Patient| UserLogin["User Login Screen<br/>TC + Password"]
+    Choice -->|Doctor| AdminLogin["Admin Login Screen<br/>Email + Password"]
     
-    UserLogin --> UserAuth{Kimlik Doğrulama}
-    UserAuth -->|Başarılı| UserDashboard[User Dashboard<br/>Tahlil Listesi]
-    UserAuth -->|Başarısız| UserLogin
+    UserLogin --> UserAuth{Authentication}
+    UserAuth -->|Success| UserDashboard["User Dashboard<br/>Test List"]
+    UserAuth -->|Failed| UserLogin
     
-    UserDashboard --> UserTahlilList[User Tahlil List]
+    UserDashboard --> UserTahlilList[User Test List]
     UserDashboard --> UserProfile[User Profile]
     
-    UserTahlilList --> UserTahlilDetail[Tahlil Detay<br/>PDF İndirme]
-    UserProfile --> ChangePassword[Şifre Değiştir]
-    UserProfile --> DeleteAccount[Hesap Sil]
+    UserTahlilList --> UserTahlilDetail["Test Detail<br/>PDF Download"]
+    UserProfile --> ChangePassword[Change Password]
+    UserProfile --> DeleteAccount[Delete Account]
     
-    AdminLogin --> AdminAuth{Admin Doğrulama}
-    AdminAuth -->|Başarılı| AdminDashboard[Admin Dashboard]
-    AdminAuth -->|Başarısız| AdminLogin
+    AdminLogin --> AdminAuth{Admin Verification}
+    AdminAuth -->|Success| AdminDashboard[Admin Dashboard]
+    AdminAuth -->|Failed| AdminLogin
     
-    AdminDashboard --> TahlilEkle[Tahlil Ekle]
-    AdminDashboard --> TahlilList[Tahlil Listesi]
-    AdminDashboard --> KilavuzYonet[Kılavuz Yönetimi]
-    AdminDashboard --> HizliDegerlendirme[Hızlı Değerlendirme]
+    AdminDashboard --> TahlilEkle[Add Test]
+    AdminDashboard --> TahlilList[Test List]
+    AdminDashboard --> KilavuzYonet[Guide Management]
+    AdminDashboard --> HizliDegerlendirme[Quick Evaluation]
     AdminDashboard --> AdminProfile[Admin Profile]
     
-    TahlilEkle --> SaveTahlil[Veritabanına Kaydet]
-    TahlilList --> TahlilDetail[Tahlil Detay<br/>Düzenle/Sil/PDF]
-    KilavuzYonet --> KilavuzList[Kılavuz Listesi]
-    KilavuzYonet --> KilavuzOlustur[Yeni Kılavuz]
+    TahlilEkle --> SaveTahlil[Save to Database]
+    TahlilList --> TahlilDetail["Test Detail<br/>Edit/Delete/PDF"]
+    KilavuzYonet --> KilavuzList[Guide List]
+    KilavuzYonet --> KilavuzOlustur[New Guide]
     
     style Start fill:#0058A3,stroke:#fff,color:#fff
     style Home fill:#00A8E8,stroke:#fff,color:#fff
@@ -434,53 +434,53 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
-    participant U as Kullanıcı/Admin
+    participant U as User/Admin
     participant UI as Flutter UI
     participant PS as PostgresService
     participant DB as PostgreSQL
     participant PDF as PDFService
     
-    Note over U,PDF: Kullanıcı Girişi ve Tahlil Görüntüleme
-    U->>UI: TC/Email + Şifre Girişi
+    Note over U,PDF: User Login and Test Viewing
+    U->>UI: TC/Email + Password
     UI->>PS: signInWithTC() / signInAdmin()
     PS->>DB: SELECT users/admins
-    DB-->>PS: Kullanıcı Bilgileri
+    DB-->>PS: User Information
     PS-->>UI: Authentication Result
-    UI-->>U: Dashboard Göster
+    UI-->>U: Show Dashboard
     
-    Note over U,PDF: Tahlil Ekleme (Admin)
-    U->>UI: Tahlil Bilgileri Girişi
+    Note over U,PDF: Add Test (Admin)
+    U->>UI: Test Information Input
     UI->>PS: createTahlil()
     PS->>DB: INSERT tahliller
     PS->>DB: INSERT serum_types
     DB-->>PS: Success
-    PS-->>UI: Tahlil ID
-    UI-->>U: Başarı Mesajı
+    PS-->>UI: Test ID
+    UI-->>U: Success Message
     
-    Note over U,PDF: Tahlil Listeleme
-    U->>UI: Tahlil Listesi İsteği
+    Note over U,PDF: Test Listing
+    U->>UI: Test List Request
     UI->>PS: getTahliller()
     PS->>DB: SELECT tahliller + serum_types
-    DB-->>PS: Tahlil Verileri
-    PS-->>UI: Tahlil Listesi
-    UI-->>U: Liste Gösterimi
+    DB-->>PS: Test Data
+    PS-->>UI: Test List
+    UI-->>U: Show List
     
-    Note over U,PDF: PDF Oluşturma
-    U->>UI: PDF İndir Butonu
+    Note over U,PDF: PDF Generation
+    U->>UI: Download PDF Button
     UI->>PS: getTahlilDetail()
-    PS->>DB: SELECT tahlil + serum + kılavuz
-    DB-->>PS: Detaylı Veri
-    PS-->>UI: Tahlil Detayları
+    PS->>DB: SELECT tahlil + serum + kilavuz
+    DB-->>PS: Detailed Data
+    PS-->>UI: Test Details
     UI->>PDF: generatePDF()
-    PDF-->>UI: PDF Dosyası
-    UI-->>U: PDF İndirme
+    PDF-->>UI: PDF File
+    UI-->>U: PDF Download
 ```
 
 ### Platform Desteği ve Mimari
 
 ```mermaid
 graph LR
-    subgraph "Desteklenen Platformlar"
+    subgraph Platforms["Supported Platforms"]
         A[Android] --> D[Flutter App]
         B[iOS] --> D
         C[Windows] --> D
@@ -488,16 +488,16 @@ graph LR
         F[macOS] --> D
     end
     
-    subgraph "Veritabanı Bağlantısı"
-        D --> G{Platform Kontrolü}
+    subgraph DB["Database Connection"]
+        D --> G{Platform Check}
         G -->|Android| H[10.0.2.2:5432]
         G -->|iOS/Desktop| I[localhost:5432]
-        G -->|Web| J[Desteklenmiyor]
+        G -->|Web| J[Not Supported]
     end
     
     H --> K[(PostgreSQL)]
     I --> K
-    J --> L[Backend API Gerekli]
+    J --> L[Backend API Required]
     
     style D fill:#0058A3,stroke:#fff,color:#fff
     style K fill:#E63946,stroke:#fff,color:#fff
